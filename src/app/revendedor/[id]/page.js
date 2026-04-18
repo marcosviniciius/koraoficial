@@ -193,7 +193,7 @@ export default function AppRevendedor() {
                                Tamanhos Disponíveis
                            </h3>
                            <div className="flex flex-wrap gap-4">
-                              {['P', 'M', 'G', 'GG', 'XG'].map(size => {
+                              {['P', 'M', 'G', 'GG', 'XG', 'XGG', 'XGGG'].map(size => {
                                   const amnt = selectedProduct.stock?.[size] || 0;
                                   const isAvail = amnt > 0;
                                   return (

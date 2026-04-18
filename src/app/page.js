@@ -82,7 +82,7 @@ export default function Home() {
                    <div className="mb-8 flex-1">
                       <p className="text-sm font-bold text-slate-600 mb-3 block">Escolha o Tamanho:</p>
                       <div className="flex flex-wrap gap-2 md:gap-3">
-                          {['P', 'M', 'G', 'GG', 'XG'].map(size => {
+                          {['P', 'M', 'G', 'GG', 'XG', 'XGG', 'XGGG'].map(size => {
                               const stock = selectedProduct.stock[size];
                               const isSelected = selectedSize === size;
                               return (
