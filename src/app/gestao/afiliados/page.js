@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, addDoc, query, orderBy, where, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AdminSidebar from "@/components/AdminSidebar";
-import { Briefcase, Copy, Users, Plus, Target, CheckCircle2, Pencil, Fingerprint } from "lucide-react";
+import { Briefcase, Copy, Users, Plus, Target, CheckCircle2, Pencil, Fingerprint, LineChart, X, MapPin } from "lucide-react";
 
 export default function AfiliadosPage() {
   const [affiliates, setAffiliates] = useState([]);
@@ -13,6 +13,10 @@ export default function AfiliadosPage() {
   const [newName, setNewName] = useState("");
   const [newPix, setNewPix] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  
+  const [selectedDashboardAffiliate, setSelectedDashboardAffiliate] = useState(null);
   
   const [orders, setOrders] = useState([]); // All affiliate orders to calculate commissions
 
@@ -42,7 +46,9 @@ export default function AfiliadosPage() {
         await updateDoc(docRef, {
           name: newName,
           pix: newPix,
-          phone: newPhone
+          phone: newPhone,
+          email: newEmail,
+          password: newPassword
         });
         setEditingAffiliate(null);
       } else {
@@ -50,6 +56,8 @@ export default function AfiliadosPage() {
           name: newName,
           pix: newPix,
           phone: newPhone,
+          email: newEmail,
+          password: newPassword,
           createdAt: new Date()
         });
       }
@@ -57,6 +65,8 @@ export default function AfiliadosPage() {
       setNewName("");
       setNewPix("");
       setNewPhone("");
+      setNewEmail("");
+      setNewPassword("");
       fetchData();
     } catch (error) {
       alert("Erro ao salvar afiliado.");
@@ -68,6 +78,8 @@ export default function AfiliadosPage() {
     setNewName(aff.name);
     setNewPix(aff.pix);
     setNewPhone(aff.phone);
+    setNewEmail(aff.email || "");
+    setNewPassword(aff.password || "");
     setShowAddModal(true);
   };
 
@@ -77,6 +89,8 @@ export default function AfiliadosPage() {
     setNewName("");
     setNewPix("");
     setNewPhone("");
+    setNewEmail("");
+    setNewPassword("");
   };
 
   const calculateOwedCommission = (affiliateId) => {
@@ -182,7 +196,11 @@ export default function AfiliadosPage() {
                                 </div>
                               </td>
                               <td className="p-4">
-                                <p className="bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg font-mono text-xs inline-block text-slate-600">{aff.pix}</p>
+                                {calculateOwedCommission(aff.id) > 0 ? (
+                                   <p className="bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg font-mono text-xs inline-block text-slate-600">{aff.pix}</p>
+                                ) : (
+                                   <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Bloqueada (R$ 0)</p>
+                                )}
                               </td>
                               <td className="p-4">
                                  <p className="text-lg font-black text-emerald-600">R$ {calculateOwedCommission(aff.id).toFixed(2).replace('.', ',')}</p>
@@ -191,22 +209,29 @@ export default function AfiliadosPage() {
                                  <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">R$ {calculatePendingSales(aff.id).toFixed(2).replace('.', ',')}</p>
                               </td>
                               <td className="p-4">
-                                 <div className="flex items-center gap-2">
-                                    <button 
-                                      onClick={() => copyToClipboard(link)}
-                                      className="bg-[var(--color-kora-blue)] text-white hover:bg-[var(--color-kora-blue-dark)] transition p-2 rounded-lg shadow-sm"
-                                      title="Copiar Link de Venda"
-                                    >
-                                      <Copy size={16} />
-                                    </button>
-                                    <button 
-                                      onClick={() => openEdit(aff)}
-                                      className="bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition p-2 rounded-lg shadow-sm"
-                                      title="Editar Dados"
-                                    >
-                                      <Pencil size={16} />
-                                    </button>
-                                 </div>
+                                  <div className="flex items-center gap-2">
+                                     <button 
+                                       onClick={() => setSelectedDashboardAffiliate(aff)}
+                                       className="bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100 transition p-2 rounded-lg shadow-sm"
+                                       title="Ver Dashboard do Afiliado"
+                                     >
+                                       <LineChart size={16} />
+                                     </button>
+                                     <button 
+                                       onClick={() => copyToClipboard(link)}
+                                       className="bg-[var(--color-kora-blue)] text-white hover:bg-[var(--color-kora-blue-dark)] transition p-2 rounded-lg shadow-sm"
+                                       title="Copiar Link de Venda"
+                                     >
+                                       <Copy size={16} />
+                                     </button>
+                                     <button 
+                                       onClick={() => openEdit(aff)}
+                                       className="bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition p-2 rounded-lg shadow-sm"
+                                       title="Editar Dados"
+                                     >
+                                       <Pencil size={16} />
+                                     </button>
+                                  </div>
                               </td>
                             </tr>
                           )
@@ -231,9 +256,14 @@ export default function AfiliadosPage() {
                                      <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase font-bold tracking-tighter">ID: {aff.id}</p>
                                      <p className="text-xs text-slate-500 mt-1">{aff.phone}</p>
                                   </div>
-                                  <button onClick={() => openEdit(aff)} className="bg-slate-50 p-2 rounded-lg border border-slate-100 text-slate-400">
-                                      <Pencil size={18} />
-                                  </button>
+                                  <div className="flex gap-2">
+                                      <button onClick={() => setSelectedDashboardAffiliate(aff)} className="bg-indigo-50 p-2 rounded-lg border border-indigo-100 text-indigo-500">
+                                          <LineChart size={18} />
+                                      </button>
+                                      <button onClick={() => openEdit(aff)} className="bg-slate-50 p-2 rounded-lg border border-slate-100 text-slate-400">
+                                          <Pencil size={18} />
+                                      </button>
+                                  </div>
                                </div>
                                <div className="flex justify-between items-center text-center mt-2">
                                   <div className="bg-emerald-50 p-3 rounded-xl flex-1 mr-2 border border-emerald-100">
@@ -305,8 +335,18 @@ export default function AfiliadosPage() {
                     <label className="text-sm font-bold text-slate-600">WhatsApp</label>
                     <input required type="text" value={newPhone} onChange={e=>setNewPhone(e.target.value)} placeholder="(DD) 99999-9999" className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition"/>
                  </div>
-                 <div>
-                    <label className="text-sm font-bold text-slate-600">Chave PIX (Para repasses)</label>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-4 mt-2">
+                    <div>
+                        <label className="text-sm font-bold text-slate-600">E-mail de Acesso (Login)</label>
+                        <input required type="email" value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder="revendedor@email.com" className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition"/>
+                    </div>
+                    <div>
+                        <label className="text-sm font-bold text-slate-600">Senha (Dashboard)</label>
+                        <input required type="text" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="Senha Forte" className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition"/>
+                    </div>
+                 </div>
+                 <div className="border-t border-slate-100 pt-4">
+                    <label className="text-sm font-bold text-slate-600">Chave PIX (Apenas visível se houver saldo)</label>
                     <input required type="text" value={newPix} onChange={e=>setNewPix(e.target.value)} className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition"/>
                  </div>
                  <div className="flex gap-3 pt-6 border-t border-slate-100">
@@ -317,6 +357,92 @@ export default function AfiliadosPage() {
                  </div>
               </form>
            </div>
+        </div>
+      )}
+      {selectedDashboardAffiliate && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedDashboardAffiliate(null)} />
+            <div className="relative w-full max-w-2xl h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                <div className="flex items-center justify-between p-6 border-b border-indigo-100 bg-indigo-50/30">
+                    <div>
+                        <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest"><LineChart size={12} className="inline mr-1"/> DASHBOARD DO AFILIADO</p>
+                        <h2 className="font-bold text-2xl text-slate-800 leading-tight mt-1">{selectedDashboardAffiliate.name}</h2>
+                        <p className="text-xs text-slate-500">Acesso via: {selectedDashboardAffiliate.email || 'Não configurado'}</p>
+                    </div>
+                    <button onClick={() => setSelectedDashboardAffiliate(null)} className="text-slate-400 hover:text-slate-900 transition p-2 bg-white rounded-full shadow-sm">
+                        <X size={20} />
+                    </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 bg-slate-50">
+                   
+                   {/* Mini KPIs */}
+                   <div className="grid grid-cols-2 gap-4">
+                       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Vendido</p>
+                          <p className="text-2xl font-black text-slate-800 mt-1">R$ {orders.filter(o => o.affiliateId === selectedDashboardAffiliate.id && o.status === "Pago").reduce((a, b) => a + (b.total || 0), 0).toFixed(2).replace('.', ',')}</p>
+                          <p className="text-xs text-emerald-500 font-bold mt-1">Pedidos concluídos</p>
+                       </div>
+                       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aguardando Pagto</p>
+                          <p className="text-2xl font-black text-amber-600 mt-1">R$ {orders.filter(o => o.affiliateId === selectedDashboardAffiliate.id && o.status === "Aguardando Pagamento do Cliente").reduce((a, b) => a + (b.total || 0), 0).toFixed(2).replace('.', ',')}</p>
+                          <p className="text-xs text-slate-400 mt-1">Boletos/Pix pendentes</p>
+                       </div>
+                   </div>
+
+                   {/* Lista de Clientes */}
+                   <div>
+                       <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-200 pb-2"><Users size={18}/> Clientes Capturados</h3>
+                       <div className="space-y-3">
+                           {orders.filter(o => o.affiliateId === selectedDashboardAffiliate.id).filter((order, index, self) => 
+                              index === self.findIndex((t) => t.client.cpf === order.client.cpf)
+                           ).map((order) => (
+                               <div key={order.client.cpf} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                                  <div>
+                                     <p className="font-bold text-sm text-slate-800">{order.client.name}</p>
+                                     <p className="text-xs text-slate-500 mt-0.5">{order.client.phone}</p>
+                                  </div>
+                                  <div className="text-right">
+                                     <p className="text-[10px] font-bold text-slate-400 uppercase">Origem</p>
+                                     <p className="text-xs text-indigo-600 font-medium">{order.client.city} - {order.client.state}</p>
+                                  </div>
+                               </div>
+                           ))}
+                           {orders.filter(o => o.affiliateId === selectedDashboardAffiliate.id).length === 0 && (
+                               <p className="text-sm text-slate-500 italic p-4 text-center bg-white rounded-xl border border-dashed border-slate-200">Nenhum cliente registrou pedido ainda.</p>
+                           )}
+                       </div>
+                   </div>
+
+                   {/* Histórico de Faturas */}
+                   <div>
+                       <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-200 pb-2"><Briefcase size={18}/> Links Faturados (Últimos)</h3>
+                       <div className="space-y-3">
+                           {orders.filter(o => o.affiliateId === selectedDashboardAffiliate.id).slice(0, 10).map((order) => (
+                               <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-2">
+                                  <div className="flex justify-between items-start">
+                                     <p className="font-bold text-sm text-slate-800 truncate pr-4">{order.items?.[0]?.name} {order.items?.length > 1 && `+${order.items.length - 1}`}</p>
+                                     <span className={`text-[10px] font-bold px-2 py-1 rounded w-fit capitalize ${order.status === 'Pago' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                        {order.status}
+                                     </span>
+                                  </div>
+                                  <div className="flex justify-between items-end border-t border-slate-50 pt-2">
+                                     <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Para Cliente</p>
+                                        <p className="text-sm font-black text-slate-800">R$ {order.total?.toFixed(2).replace('.', ',')}</p>
+                                     </div>
+                                     <div className="text-right">
+                                        <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Lucro Afiliado</p>
+                                        <p className="text-sm font-black text-purple-600">R$ {order.commission?.toFixed(2).replace('.', ',')}</p>
+                                     </div>
+                                  </div>
+                               </div>
+                           ))}
+                       </div>
+                   </div>
+
+                </div>
+            </div>
         </div>
       )}
     </div>
