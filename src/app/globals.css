@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc; /* Very light slate for clean mode background */
+  --foreground: #0f172a; /* Slate 900 for texts */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-logo: var(--font-shrikhand);
+  
+  /* Kora Brand Colors */
+  --color-kora-green: #00bf63;
+  --color-kora-green-dark: #00a454;
+  --color-kora-yellow: #ffde59;
+  --color-kora-yellow-dark: #ecc942;
+  --color-kora-blue: #5170ff;
+  --color-kora-blue-dark: #3a54d6;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  @apply antialiased;
+}
