@@ -100,38 +100,38 @@ export default function CheckoutPage() {
 
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Form */}
-          <div className="lg:col-span-8 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
+          <div className="lg:col-span-8 bg-surface dark:bg-slate-900 p-6 md:p-8 rounded-3xl shadow-sm border border-border-dim">
             <h2 className="font-logo text-3xl text-[var(--color-kora-blue)] mb-6">FINALIZAR COMPRA</h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Data */}
               <div className="space-y-4">
-                <h3 className="font-bold text-slate-800 border-b pb-2">Dados Pessoais (Criação de Conta)</h3>
+                <h3 className="font-bold text-main border-b border-border-dim pb-2">Dados Pessoais (Criação de Conta)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input required placeholder="Nome Completo" value={formData.name} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, name: e.target.value})} />
-                  <input required placeholder="CPF" value={formData.cpf} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={handleCpfChange} />
-                  <input required type="email" placeholder="E-mail" value={formData.email} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, email: e.target.value})} />
-                  <input required placeholder="Telefone / WhatsApp" value={formData.phone} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  <input required placeholder="Nome Completo" value={formData.name} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none text-main" onChange={e => setFormData({...formData, name: e.target.value})} />
+                  <input required placeholder="CPF" value={formData.cpf} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none text-main" onChange={handleCpfChange} />
+                  <input required type="email" placeholder="E-mail" value={formData.email} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none text-main" onChange={e => setFormData({...formData, email: e.target.value})} />
+                  <input required placeholder="Telefone / WhatsApp" value={formData.phone} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none text-main" onChange={e => setFormData({...formData, phone: e.target.value})} />
                 </div>
               </div>
 
               {/* Address */}
               <div className="space-y-4">
-                <h3 className="font-bold text-slate-800 border-b pb-2">Endereço de Entrega</h3>
+                <h3 className="font-bold text-main border-b border-border-dim pb-2">Endereço de Entrega</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input required placeholder="CEP" value={formData.cep} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-1" onChange={e => setFormData({...formData, cep: e.target.value})} />
-                  <input required placeholder="Rua / Avenida" value={formData.address} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-2" onChange={e => setFormData({...formData, address: e.target.value})} />
-                  <input required placeholder="Número" value={formData.number} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, number: e.target.value})} />
-                  <input placeholder="Complemento" value={formData.complement} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, complement: e.target.value})} />
-                  <input required placeholder="Bairro" value={formData.neighborhood} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, neighborhood: e.target.value})} />
-                  <input required placeholder="Cidade" value={formData.city} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-2" onChange={e => setFormData({...formData, city: e.target.value})} />
-                  <input required placeholder="UF" value={formData.state} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, state: e.target.value})} />
+                  <input required placeholder="CEP" value={formData.cep} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-1 text-main" onChange={e => setFormData({...formData, cep: e.target.value})} />
+                  <input required placeholder="Rua / Avenida" value={formData.address} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-2 text-main" onChange={e => setFormData({...formData, address: e.target.value})} />
+                  <input required placeholder="Número" value={formData.number} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none text-main" onChange={e => setFormData({...formData, number: e.target.value})} />
+                  <input placeholder="Complemento" value={formData.complement} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none text-main" onChange={e => setFormData({...formData, complement: e.target.value})} />
+                  <input required placeholder="Bairro" value={formData.neighborhood} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none text-main" onChange={e => setFormData({...formData, neighborhood: e.target.value})} />
+                  <input required placeholder="Cidade" value={formData.city} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-2 text-main" onChange={e => setFormData({...formData, city: e.target.value})} />
+                  <input required placeholder="UF" value={formData.state} className="bg-surface-hover dark:bg-slate-800 border border-border-dim p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none text-main" onChange={e => setFormData({...formData, state: e.target.value})} />
                 </div>
               </div>
 
@@ -145,8 +145,8 @@ export default function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-4">
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 sticky top-24">
-              <h3 className="font-logo text-2xl text-slate-800 mb-6">SEU PEDIDO</h3>
+            <div className="bg-surface p-6 rounded-3xl shadow-sm border border-slate-100 sticky top-24">
+              <h3 className="font-logo text-2xl text-main mb-6">SEU PEDIDO</h3>
               {items.length === 0 ? (
                 <p className="text-gray-500">Carrinho vazio.</p>
               ) : (
@@ -157,7 +157,7 @@ export default function CheckoutPage() {
                         <span className="font-bold text-[var(--color-kora-green)]">{item.quantity}x</span>
                         <div className="flex flex-col">
                             <span className="truncate">{item.name}</span>
-                            <span className="text-xs text-slate-400">Tamanho: <strong className="text-slate-600">{item.selectedSize}</strong></span>
+                            <span className="text-xs text-slate-400">Tamanho: <strong className="text-dim">{item.selectedSize}</strong></span>
                             {item.orderType === 'Encomenda' && <span className="text-[10px] text-yellow-600 font-bold bg-yellow-50 px-2 py-0.5 mt-1 rounded-sm border border-yellow-100 w-max">25 a 30 dias</span>}
                         </div>
                       </div>

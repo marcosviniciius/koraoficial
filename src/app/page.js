@@ -98,23 +98,23 @@ function HomeContent() {
      const isImmediate = stockForSize > 0;
 
      return (
-        <div className="min-h-screen bg-slate-50 pb-20 font-sans animate-in fade-in duration-300">
+        <div className="min-h-screen bg-background pb-20 font-sans animate-in fade-in duration-300">
            
            {/* Product Header */}
-           <div className="sticky top-0 z-50 bg-white border-b border-slate-200 p-4 shadow-sm flex items-center gap-4">
-               <button onClick={() => { setSelectedProduct(null); setSelectedSize(""); }} className="bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition text-slate-800">
+           <div className="sticky top-0 z-50 bg-surface border-b border-border-dim p-4 shadow-sm flex items-center gap-4">
+               <button onClick={() => { setSelectedProduct(null); setSelectedSize(""); }} className="bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition text-main">
                    <ChevronLeft size={20} />
                </button>
-               <h2 className="font-bold text-slate-800 text-lg truncate flex-1">{selectedProduct.name}</h2>
+               <h2 className="font-bold text-main text-lg truncate flex-1">{selectedProduct.name}</h2>
            </div>
 
            <div className="max-w-5xl mx-auto px-4 py-8">
                
-               <div className="flex flex-col md:flex-row gap-6 lg:gap-8 bg-white p-4 md:p-6 rounded-lg shadow-sm mb-12 border border-slate-200">
+               <div className="flex flex-col md:flex-row gap-6 lg:gap-8 bg-surface -900 p-4 md:p-6 rounded-lg shadow-sm mb-12 border border-border-dim">
                    
                    {/* Coluna Esquerda: Imagem + Detalhes (Desktop) */}
                    <div className="w-full md:w-[65%] flex flex-col order-1 md:order-1">
-                       <div className="bg-white rounded-lg flex items-center justify-center p-0 md:p-4">
+                       <div className="bg-surface rounded-lg flex items-center justify-center p-0 md:p-4">
                           {selectedProduct.imageUrl ? (
                               <img src={selectedProduct.imageUrl} className="max-w-full h-auto max-h-[500px] object-contain" alt={selectedProduct.name} />
                           ) : (
@@ -123,9 +123,9 @@ function HomeContent() {
                        </div>
 
                        {/* Descrição Desktop */}
-                       <div className="hidden md:block mt-8 border-t border-slate-200 pt-8 pb-4 px-4">
-                           <h3 className="text-xl font-bold text-slate-800 mb-6">O que você precisa saber sobre este produto</h3>
-                           <ul className="list-disc pl-5 space-y-3 text-sm text-slate-600">
+                       <div className="hidden md:block mt-8 border-t border-border-dim pt-8 pb-4 px-4">
+                           <h3 className="text-xl font-bold text-main mb-6">O que você precisa saber sobre este produto</h3>
+                           <ul className="list-disc pl-5 space-y-3 text-sm text-dim">
                                <li>Camisa importada padrão 1:1 Tailandesa Premium.</li>
                                <li>Escudos das confederações e do time bordados em alta definição.</li>
                                <li>Tecido confortável com tecnologia de respirabilidade térmica.</li>
@@ -137,20 +137,20 @@ function HomeContent() {
                        {/* Foto da Tabela Desktop */}
                        {selectedProduct.sizeChartUrl && (
                           <div className="hidden md:block mt-4 px-4 pb-8">
-                             <h3 className="text-xl font-bold text-slate-800 mb-6">Guia de Tamanhos</h3>
-                             <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full max-w-xl rounded-lg border border-slate-200 shadow-sm" />
+                             <h3 className="text-xl font-bold text-main mb-6">Guia de Tamanhos</h3>
+                             <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full max-w-xl rounded-lg border border-border-dim shadow-sm" />
                           </div>
                        )}
                    </div>
 
                    {/* Coluna Direita: Buybox + Detalhes (Mobile) */}
                    <div className="w-full md:w-[35%] flex flex-col order-2 md:order-2">
-                       <div className="border border-slate-200 rounded-[8px] p-6 lg:sticky lg:top-24">
-                           <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4 leading-tight">{selectedProduct.name}</h1>
+                       <div className="border border-border-dim rounded-[8px] p-6 lg:sticky lg:top-24">
+                           <h1 className="text-2xl md:text-3xl font-bold text-main mb-4 leading-tight">{selectedProduct.name}</h1>
 
                            <div className="mb-6">
                                <div className="flex items-end gap-2">
-                                   <p className="text-4xl font-black text-slate-800 leading-none">
+                                   <p className="text-4xl font-black text-main leading-none">
                                        <span className="text-xl relative top-[-6px] pr-1">R$</span>
                                        {selectedProduct.price.toFixed(2).replace('.', ',')}
                                    </p>
@@ -159,9 +159,9 @@ function HomeContent() {
                            </div>
 
                            {/* Seleção de Tamanhos e Tabela */}
-                           <div className="mb-6 pt-6 border-t border-slate-200">
+                           <div className="mb-6 pt-6 border-t border-border-dim">
                               <div className="flex justify-between items-center mb-3">
-                                  <p className="text-base font-bold text-slate-800">Tamanho:</p>
+                                  <p className="text-base font-bold text-main">Tamanho:</p>
                               </div>
                               
                               <div className="flex flex-wrap gap-2">
@@ -174,8 +174,8 @@ function HomeContent() {
                                           onClick={() => setSelectedSize(size)}
                                           className={`relative px-4 py-2 rounded-md border text-sm font-bold transition-all min-w-[2.5rem] ${
                                               isSelected 
-                                              ? 'border-[#3483fa] bg-blue-50 text-[#3483fa]' 
-                                              : 'border-slate-300 text-slate-800 hover:border-slate-400 bg-white'
+                                              ? 'border-[#3483fa] bg-blue-50 -900/20 text-[#3483fa]' 
+                                              : 'border-border-dim text-main hover:border-slate-400 bg-surface -800'
                                           }`}
                                         >
                                           {size}
@@ -186,7 +186,7 @@ function HomeContent() {
                               {selectedSize && (
                                   <p className="text-sm mt-4 font-normal">
                                       {isImmediate ? (
-                                         <span className="text-slate-800 font-bold text-xs"><Zap className="inline text-[#00a650] fill-[#00a650] relative top-[-1px]" size={14}/> Pronta Entrega</span>
+                                         <span className="text-main font-bold text-xs"><Zap className="inline text-[#00a650] fill-[#00a650] relative top-[-1px]" size={14}/> Pronta Entrega</span>
                                       ) : (
                                          <span className="text-amber-700 font-bold border border-amber-500 bg-amber-50 px-2 py-1 rounded text-xs inline-block mt-2">Disponibilidade: 25 a 30 dias</span>
                                       )}
@@ -227,9 +227,9 @@ function HomeContent() {
                         </div>
 
                         {/* Descrição Mobile e Tabela de Medidas (renderizado após a caixa de compra apenas no celular) */}
-                        <div className="md:hidden mt-10 border-t border-slate-200 pt-8 pb-4">
-                            <h3 className="text-xl font-bold text-slate-800 mb-6">O que você precisa saber sobre este produto</h3>
-                            <ul className="list-disc pl-5 space-y-3 text-sm text-slate-600">
+                        <div className="md:hidden mt-10 border-t border-border-dim pt-8 pb-4">
+                            <h3 className="text-xl font-bold text-main mb-6">O que você precisa saber sobre este produto</h3>
+                            <ul className="list-disc pl-5 space-y-3 text-sm text-dim">
                                 <li>Camisa importada padrão 1:1 Tailandesa Premium.</li>
                                 <li>Escudos das confederações e do time bordados em alta definição.</li>
                                 <li>Tecido confortável com tecnologia de respirabilidade térmica.</li>
@@ -241,8 +241,8 @@ function HomeContent() {
                         {/* Foto da Tabela Mobile */}
                         {selectedProduct.sizeChartUrl && (
                            <div className="md:hidden mt-6 pb-4 border-t border-slate-100 pt-6">
-                              <h3 className="text-xl font-bold text-slate-800 mb-6">Guia de Tamanhos</h3>
-                              <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full rounded-lg border border-slate-200 shadow-sm" />
+                              <h3 className="text-xl font-bold text-main mb-6">Guia de Tamanhos</h3>
+                              <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full rounded-lg border border-border-dim shadow-sm" />
                            </div>
                         )}
                    </div>
@@ -250,11 +250,11 @@ function HomeContent() {
 
                {/* Recomendados / Semelhantes (Fim da Página) */}
                {similarProducts.length > 0 && (
-                   <div className="mt-16 border-t border-slate-200 pt-12">
-                       <h3 className="text-2xl font-bold text-slate-800 mb-8 border-l-4 border-[#3483fa] pl-4">Quem viu este produto também comprou</h3>
+                   <div className="mt-16 border-t border-border-dim pt-12">
+                       <h3 className="text-2xl font-bold text-main mb-8 border-l-4 border-[#3483fa] pl-4">Quem viu este produto também comprou</h3>
                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                           {similarProducts.map((p) => (
-                            <div key={p.id} onClick={() => { setSelectedProduct(null); setTimeout(() => setSelectedProduct(p), 50); window.scrollTo(0, 0); }} className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
+                            <div key={p.id} onClick={() => { setSelectedProduct(null); setTimeout(() => setSelectedProduct(p), 50); window.scrollTo(0, 0); }} className="group cursor-pointer bg-surface rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
                                 <div className="relative w-full pt-[100%] bg-slate-100">
                                    {p.imageUrl ? (
                                       <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -264,7 +264,7 @@ function HomeContent() {
                                 </div>
                                 <div className="p-4 border-t border-slate-50">
                                    <h4 className="font-bold text-slate-700 text-sm mb-2 leading-tight group-hover:text-[#3483fa] transition-colors">{p.name}</h4>
-                                   <p className="font-light text-slate-800 text-xl">R$ {p.price.toFixed(2).replace('.', ',')}</p>
+                                   <p className="font-light text-main text-xl">R$ {p.price.toFixed(2).replace('.', ',')}</p>
                                 </div>
                             </div>
                           ))}
@@ -279,12 +279,12 @@ function HomeContent() {
   return (
     <>
       <Navbar searchTerm={searchTerm} onSearch={setSearchTerm} />
-      <main className="flex flex-col min-h-screen bg-slate-50 pt-20">
+      <main className="flex flex-col min-h-screen bg-background pt-20">
         
 
 
         {/* Hero Section */}
-        <section className="relative w-full bg-white overflow-hidden py-16 md:py-24">
+        <section className="relative w-full bg-surface -900 overflow-hidden py-16 md:py-24">
           <div className="absolute top-0 right-0 w-[40%] h-full bg-[var(--color-kora-yellow)] skew-x-[-15deg] translate-x-12 opacity-10"></div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -297,7 +297,7 @@ function HomeContent() {
                 VISTA SUA <br/> 
                 <span className="text-[var(--color-kora-green)]">PAIXÃO</span>.
               </h1>
-              <p className="text-lg text-slate-600 max-w-lg">
+              <p className="text-lg text-dim max-w-lg">
                 Camisas de time originais com a melhor qualidade. O seu manto sagrado está aqui na Kora. 
               </p>
               
@@ -311,37 +311,74 @@ function HomeContent() {
         </section>
 
         {/* Trust Bar */}
-        <section className="bg-[var(--color-kora-blue)] py-8 border-y-4 border-[var(--color-kora-yellow)]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-white text-center md:text-left">
-               <div className="flex flex-col md:flex-row items-center gap-3 justify-center md:justify-start">
-                  <ShieldCheck size={28} className="text-[var(--color-kora-yellow)]" />
-                  <div>
-                    <h4 className="font-bold text-sm">Compra Segura</h4>
-                    <p className="text-xs opacity-80">Dados criptografados</p>
+        <section className="bg-[var(--color-kora-blue)] py-6 border-y-4 border-[var(--color-kora-yellow)] overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 overflow-hidden">
+            <div className="animate-marquee flex items-center md:grid md:grid-cols-4 md:gap-6 text-white">
+               
+               {/* Bloco de Itens 1 */}
+               <div className="flex shrink-0 items-center gap-12 pr-12 md:pr-0 md:gap-0 md:contents">
+                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max">
+                     <ShieldCheck size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
+                     <div>
+                       <h4 className="font-bold text-sm leading-tight">Compra Segura</h4>
+                       <p className="text-[10px] opacity-80">Dados criptografados</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max">
+                     <Zap size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
+                     <div>
+                       <h4 className="font-bold text-sm leading-tight">Envio Expresso</h4>
+                       <p className="text-[10px] opacity-80">Para pronta entrega</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max">
+                     <RotateCcw size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
+                     <div>
+                       <h4 className="font-bold text-sm leading-tight">Troca Fácil</h4>
+                       <p className="text-[10px] opacity-80">Até 7 dias grátis</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max">
+                     <Star size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
+                     <div>
+                       <h4 className="font-bold text-sm leading-tight">Qualidade Premium</h4>
+                       <p className="text-[10px] opacity-80">Garantia Kora</p>
+                     </div>
                   </div>
                </div>
-               <div className="flex flex-col md:flex-row items-center gap-3 justify-center md:justify-start">
-                  <Zap size={28} className="text-[var(--color-kora-yellow)]" />
-                  <div>
-                    <h4 className="font-bold text-sm">Envio Expresso</h4>
-                    <p className="text-xs opacity-80">Para pronta entrega</p>
+
+               {/* Bloco de Itens 2 (Apenas Mobile para Loop) */}
+               <div className="flex shrink-0 items-center gap-12 pr-12 md:hidden">
+                  <div className="flex items-center gap-3 justify-center min-w-max">
+                     <ShieldCheck size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
+                     <div>
+                       <h4 className="font-bold text-sm leading-tight">Compra Segura</h4>
+                       <p className="text-[10px] opacity-80">Dados criptografados</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center min-w-max">
+                     <Zap size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
+                     <div>
+                       <h4 className="font-bold text-sm leading-tight">Envio Expresso</h4>
+                       <p className="text-[10px] opacity-80">Para pronta entrega</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center min-w-max">
+                     <RotateCcw size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
+                     <div>
+                       <h4 className="font-bold text-sm leading-tight">Troca Fácil</h4>
+                       <p className="text-[10px] opacity-80">Até 7 dias grátis</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center min-w-max">
+                     <Star size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
+                     <div>
+                       <h4 className="font-bold text-sm leading-tight">Qualidade Premium</h4>
+                       <p className="text-[10px] opacity-80">Garantia Kora</p>
+                     </div>
                   </div>
                </div>
-               <div className="flex flex-col md:flex-row items-center gap-3 justify-center md:justify-start">
-                  <RotateCcw size={28} className="text-[var(--color-kora-yellow)]" />
-                  <div>
-                    <h4 className="font-bold text-sm">Troca Fácil</h4>
-                    <p className="text-xs opacity-80">Até 7 dias grátis</p>
-                  </div>
-               </div>
-               <div className="flex flex-col md:flex-row items-center gap-3 justify-center md:justify-start">
-                  <Star size={28} className="text-[var(--color-kora-yellow)]" />
-                  <div>
-                    <h4 className="font-bold text-sm">Qualidade Premium</h4>
-                    <p className="text-xs opacity-80">Garantia Kora</p>
-                  </div>
-               </div>
+
             </div>
           </div>
         </section>
@@ -352,11 +389,11 @@ function HomeContent() {
 
             {loading ? (
                 <div className="text-center py-20">
-                    <div className="w-12 h-12 border-4 border-slate-200 border-t-[var(--color-kora-green)] rounded-full animate-spin mx-auto mb-4"></div>
+                    <div className="w-12 h-12 border-4 border-border-dim border-t-[var(--color-kora-green)] rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-slate-500 font-bold">Acordando o sistema...</p>
                 </div>
             ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-3xl border border-slate-200">
+                <div className="text-center py-20 bg-surface rounded-3xl border border-border-dim">
                     <p className="text-slate-500 font-bold mb-2">Nenhuma camisa encontrada.</p>
                 </div>
             ) : (
@@ -371,7 +408,7 @@ function HomeContent() {
                        <div className="mb-6 md:mb-10 text-center md:text-left px-4 md:px-0">
                            <h3 
                              onClick={() => router.push(`/categoria/${encodeURIComponent(category)}`)}
-                             className="font-logo text-2xl md:text-3xl lg:text-4xl text-[var(--color-kora-blue)] border-b-4 border-[var(--color-kora-yellow)] inline-block pb-2 uppercase uppercase-shadow cursor-pointer hover:opacity-80 transition-opacity"
+                             className="font-logo text-2xl md:text-3xl lg:text-4xl text-[var(--color-kora-blue)] border-b-4 border-[var(--color-kora-yellow)] inline-block pb-2 uppercase cursor-pointer hover:opacity-80 transition-opacity"
                            >
                                {category}
                            </h3>
@@ -380,21 +417,21 @@ function HomeContent() {
                        {/* Mobile Carousel (Falso Infinito) */}
                        <div className="flex md:hidden overflow-x-auto snap-x snap-mandatory show-scrollbars-modern gap-4 pb-8 pt-2 px-4 w-full">
                            {mobileProducts.map((p, idx) => (
-                             <div key={`${p.id}-${idx}`} onClick={() => setSelectedProduct(p)} className="snap-center shrink-0 w-[260px] sm:w-[280px] group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-[0_8px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 transition-all hover:shadow-[0_20px_40px_-15px_rgba(0,191,99,0.15)] flex flex-col hover:-translate-y-1">
+                             <div key={`${p.id}-${idx}`} onClick={() => setSelectedProduct(p)} className="snap-center shrink-0 w-[260px] sm:w-[280px] group cursor-pointer bg-surface -900 rounded-2xl overflow-hidden shadow-sm border border-border-dim transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
                                {/* Image Frame */}
-                               <div className="relative w-full pt-[100%] bg-slate-100 overflow-hidden">
+                               <div className="relative w-full pt-[100%] bg-surface-hover overflow-hidden">
                                  {p.imageUrl ? (
                                     <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                  ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center font-logo text-slate-300 text-2xl">KORA</div>
+                                    <div className="absolute inset-0 flex items-center justify-center font-logo text-dim text-2xl">KORA</div>
                                  )}
                                </div>
                                {/* Card Info */}
                                <div className="p-6 flex flex-col flex-1">
-                                 <h3 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-[var(--color-kora-green)] transition-colors">{p.name}</h3>
-                                 <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100">
+                                 <h3 className="font-bold text-main text-lg mb-2 leading-tight group-hover:text-[var(--color-kora-green)] transition-colors">{p.name}</h3>
+                                 <div className="mt-auto pt-4 flex items-center justify-between border-t border-border-dim">
                                    <span className="font-bold text-2xl text-[var(--color-kora-green-dark)]">R$ {p.price.toFixed(2).replace('.', ',')}</span>
-                                   <div className="bg-slate-100 text-slate-400 p-2 rounded-lg group-hover:bg-[var(--color-kora-green)] group-hover:text-white transition-colors">
+                                   <div className="bg-surface-hover text-dim p-2 rounded-lg group-hover:bg-[var(--color-kora-green)] group-hover:text-white transition-colors">
                                        <ShoppingCart size={20} />
                                    </div>
                                  </div>
@@ -406,19 +443,19 @@ function HomeContent() {
                        {/* Desktop Grid / Mobile Selected Grid */}
                        <div className="hidden md:grid lg:grid-cols-4 md:gap-8 md:px-0 w-full">
                          {categoryProducts.map((p) => (
-                           <div key={p.id} onClick={() => setSelectedProduct(p)} className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-[0_8px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 transition-all hover:shadow-[0_20px_40px_-15px_rgba(0,191,99,0.15)] flex flex-col hover:-translate-y-1">
-                             <div className="relative w-full pt-[100%] bg-slate-100 overflow-hidden">
+                           <div key={p.id} onClick={() => setSelectedProduct(p)} className="group cursor-pointer bg-surface -900 rounded-2xl overflow-hidden shadow-sm border border-border-dim transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
+                             <div className="relative w-full pt-[100%] bg-surface-hover overflow-hidden">
                                {p.imageUrl ? (
                                   <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                ) : (
-                                  <div className="absolute inset-0 flex items-center justify-center font-logo text-slate-300 text-2xl">KORA</div>
+                                  <div className="absolute inset-0 flex items-center justify-center font-logo text-dim text-2xl">KORA</div>
                                )}
                              </div>
                              <div className="p-6 flex flex-col flex-1">
-                               <h3 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-[var(--color-kora-green)] transition-colors">{p.name}</h3>
-                               <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100">
+                               <h3 className="font-bold text-main text-lg mb-2 leading-tight group-hover:text-[var(--color-kora-green)] transition-colors">{p.name}</h3>
+                               <div className="mt-auto pt-4 flex items-center justify-between border-t border-border-dim">
                                  <span className="font-bold text-2xl text-[var(--color-kora-green-dark)]">R$ {p.price.toFixed(2).replace('.', ',')}</span>
-                                 <div className="bg-slate-100 text-slate-400 p-2 rounded-lg group-hover:bg-[var(--color-kora-green)] group-hover:text-white transition-colors">
+                                 <div className="bg-surface-hover text-dim p-2 rounded-lg group-hover:bg-[var(--color-kora-green)] group-hover:text-white transition-colors">
                                      <ShoppingCart size={20} />
                                  </div>
                                </div>

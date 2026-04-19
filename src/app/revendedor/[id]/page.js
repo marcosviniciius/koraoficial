@@ -225,8 +225,8 @@ export default function AppRevendedor() {
       const waLink = `https://wa.me/55${createdOrderData.clientPhone.replace(/\D/g, '')}?text=${waMessage}`;
 
       return (
-          <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-              <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-lg w-full text-center shadow-2xl animate-in zoom-in duration-500">
+          <div className="min-h-screen bg-background flex items-center justify-center p-4">
+              <div className="bg-surface -900 rounded-[2.5rem] p-8 md:p-12 max-w-lg w-full text-center shadow-2xl animate-in zoom-in duration-500 border border-border-dim">
                   <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
                       <ShieldCheck size={40} />
                   </div>
@@ -254,7 +254,7 @@ export default function AppRevendedor() {
                         className="w-full p-5 rounded-2xl bg-[#25D366] hover:bg-[#1DA851] text-white flex items-center justify-between transition-all shadow-lg hover:shadow-[#25D366]/30"
                       >
                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-surface/20 rounded-xl flex items-center justify-center">
                                 <MessageCircle size={20}/>
                             </div>
                             <span className="font-bold">Enviar pelo WhatsApp</span>
@@ -266,13 +266,13 @@ export default function AppRevendedor() {
                   <div className="mt-12 flex flex-col gap-3">
                       <button 
                          onClick={() => setCreatedOrderData(null)}
-                         className="text-slate-500 font-bold text-sm hover:text-slate-800 transition py-2"
+                         className="text-slate-500 font-bold text-sm hover:text-main transition py-2"
                       >
                          Fazer novo pedido
                       </button>
                       <button 
                          onClick={() => { setCreatedOrderData(null); setSelectedProduct(null); }}
-                         className="bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 font-bold p-4 rounded-xl transition-all"
+                         className="bg-background text-slate-400 hover:bg-slate-100 hover:text-dim font-bold p-4 rounded-xl transition-all"
                       >
                          Voltar ao Catálogo
                       </button>
@@ -288,34 +288,34 @@ export default function AppRevendedor() {
   if (selectedProduct) {
       const similarProducts = products.filter(p => p.category === selectedProduct.category && p.id !== selectedProduct.id).slice(0, 4);
       return (
-          <div className="min-h-screen bg-slate-50 pb-20 font-sans animate-in fade-in duration-300">
+          <div className="min-h-screen bg-background pb-20 font-sans animate-in fade-in duration-300">
              
              {/* Product Header */}
-             <div className="sticky top-0 z-50 bg-white border-b border-slate-200 p-4 shadow-sm flex items-center gap-4">
-                 <button onClick={handleBackToCatalog} className="bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition text-slate-800">
+             <div className="sticky top-0 z-50 bg-surface border-b border-border-dim p-4 shadow-sm flex items-center gap-4">
+                 <button onClick={handleBackToCatalog} className="bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition text-main">
                      <ChevronLeft size={20} />
                  </button>
-                 <h2 className="font-bold text-slate-800 text-lg truncate flex-1">{selectedProduct.name}</h2>
+                 <h2 className="font-bold text-main text-lg truncate flex-1">{selectedProduct.name}</h2>
              </div>
 
              <div className="max-w-5xl mx-auto px-4 py-8">
                  
-                 <div className="flex flex-col md:flex-row gap-6 lg:gap-8 bg-white p-4 md:p-6 rounded-lg shadow-sm mb-12 border border-slate-200">
+                 <div className="flex flex-col md:flex-row gap-6 lg:gap-8 bg-surface -900 p-4 md:p-6 rounded-lg shadow-sm mb-12 border border-border-dim">
                      
                      {/* Coluna Esquerda: Imagem + Detalhes (Desktop) */}
                      <div className="w-full md:w-[65%] flex flex-col order-1 md:order-1">
-                         <div className="bg-white rounded-lg flex items-center justify-center p-0 md:p-4">
+                         <div className="bg-surface-hover -800 rounded-lg flex items-center justify-center p-0 md:p-4 border border-border-dim">
                             {selectedProduct.imageUrl ? (
                                 <img src={selectedProduct.imageUrl} className="max-w-full h-auto max-h-[500px] object-contain" alt={selectedProduct.name} />
                             ) : (
-                                <div className="w-full h-[400px] flex items-center justify-center font-logo text-slate-300 text-6xl">KORA</div>
+                                <div className="w-full h-[400px] flex items-center justify-center font-logo text-dim text-6xl">KORA</div>
                             )}
                          </div>
 
                          {/* Descrição Desktop */}
-                         <div className="hidden md:block mt-8 border-t border-slate-200 pt-8 pb-4 px-4">
-                             <h3 className="text-xl font-bold text-slate-800 mb-6 font-logo uppercase tracking-tight">Qualidade e Detalhes Técnicos</h3>
-                             <ul className="list-disc pl-5 space-y-3 text-sm text-slate-600">
+                         <div className="hidden md:block mt-8 border-t border-border-dim pt-8 pb-4 px-4">
+                             <h3 className="text-xl font-bold text-main mb-6 font-logo uppercase tracking-tight">Qualidade e Detalhes Técnicos</h3>
+                             <ul className="list-disc pl-5 space-y-3 text-sm text-dim">
                                  <li>Camisa importada padrão 1:1 Tailandesa Premium (A melhor do mercado).</li>
                                  <li>Escudos, logos e patrocínios em bordado ou silk de alta definição emborrachado.</li>
                                  <li>Tecido DryFit Ultra com tecnologia de respirabilidade térmica avançada.</li>
@@ -328,21 +328,21 @@ export default function AppRevendedor() {
                          {/* Foto da Tabela Desktop */}
                          {selectedProduct.sizeChartUrl && (
                             <div className="hidden md:block mt-4 px-4 pb-8">
-                               <h3 className="text-xl font-bold text-slate-800 mb-6 font-logo uppercase tracking-tight">Guia de Medidas (Referência)</h3>
-                               <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full max-w-xl rounded-lg border border-slate-200 shadow-sm" />
+                               <h3 className="text-xl font-bold text-main mb-6 font-logo uppercase tracking-tight">Guia de Medidas (Referência)</h3>
+                               <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full max-w-xl rounded-lg border border-border-dim shadow-sm" />
                             </div>
                          )}
                      </div>
 
                      {/* Coluna Direita: Buybox Info */}
                      <div className="w-full md:w-[35%] flex flex-col order-2 md:order-2">
-                         <div className="border border-slate-200 rounded-[8px] p-6 lg:sticky lg:top-24">
-                             <div className="flex items-center gap-2 mb-4 bg-purple-50 text-purple-700 font-bold text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg w-fit">
+                         <div className="border border-border-dim bg-surface -900 rounded-[8px] p-6 lg:sticky lg:top-24">
+                             <div className="flex items-center gap-2 mb-4 bg-purple-50 -900/20 text-purple-700 -400 font-bold text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg w-fit">
                                  <Tag size={12}/> SKU: {selectedProduct.id.slice(0, 5).toUpperCase()}
                              </div>
-                             <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4 leading-tight">{selectedProduct.name}</h1>
+                             <h1 className="text-2xl md:text-3xl font-bold text-main mb-4 leading-tight">{selectedProduct.name}</h1>
 
-                             <div className="mb-6 pt-6 border-t border-slate-200">
+                             <div className="mb-6 pt-6 border-t border-border-dim">
                                 <p className="text-sm text-slate-500 mb-4">Escolha o tamanho para conferir a disponibilidade real em estoque:</p>
                                 <div className="flex flex-wrap gap-2">
                                     {['P', 'M', 'G', 'GG', 'XG', 'XGG', 'XGGG'].map(size => {
@@ -355,7 +355,7 @@ export default function AppRevendedor() {
                                             className={`relative px-4 py-2 rounded-md border text-sm font-bold transition-all min-w-[2.5rem] ${
                                                 isSelected 
                                                 ? 'border-purple-600 bg-purple-50 text-purple-600' 
-                                                : 'border-slate-300 text-slate-800 hover:border-slate-400 bg-white'
+                                                : 'border-slate-300 text-main hover:border-slate-400 bg-surface'
                                             }`}
                                           >
                                             {size}
@@ -389,9 +389,9 @@ export default function AppRevendedor() {
                          </div>
 
                          {/* Mobile Details */}
-                         <div className="md:hidden mt-10 border-t border-slate-200 pt-8 pb-4">
-                             <h3 className="text-xl font-bold text-slate-800 mb-6">Informações Técnicas</h3>
-                             <ul className="list-disc pl-5 space-y-3 text-sm text-slate-600">
+                         <div className="md:hidden mt-10 border-t border-border-dim pt-8 pb-4">
+                             <h3 className="text-xl font-bold text-main mb-6">Informações Técnicas</h3>
+                             <ul className="list-disc pl-5 space-y-3 text-sm text-dim">
                                  <li>Qualidade Thai Premium 1:1</li>
                                  <li>Tecnologia DryFit Ultra</li>
                                  <li>Escudos e Patrocínios Oficiais</li>
@@ -401,8 +401,8 @@ export default function AppRevendedor() {
 
                          {selectedProduct.sizeChartUrl && (
                             <div className="md:hidden mt-6 pb-4 border-t border-slate-100 pt-6">
-                               <h3 className="text-xl font-bold text-slate-800 mb-6">Guia de Tamanhos</h3>
-                               <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full rounded-lg border border-slate-200 shadow-sm" />
+                               <h3 className="text-xl font-bold text-main mb-6">Guia de Tamanhos</h3>
+                               <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full rounded-lg border border-border-dim shadow-sm" />
                             </div>
                          )}
                      </div>
@@ -410,11 +410,11 @@ export default function AppRevendedor() {
 
                  {/* Recomendados */}
                  {similarProducts.length > 0 && (
-                     <div className="mt-16 border-t border-slate-200 pt-12">
-                         <h3 className="text-2xl font-bold text-slate-800 mb-8 border-l-4 border-purple-600 pl-4 font-logo uppercase">Quem viu esta camisa também comprou</h3>
+                     <div className="mt-16 border-t border-border-dim pt-12">
+                         <h3 className="text-2xl font-bold text-main mb-8 border-l-4 border-purple-600 pl-4 font-logo uppercase">Quem viu esta camisa também comprou</h3>
                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                             {similarProducts.map((p) => (
-                              <div key={p.id} onClick={() => { setSelectedProduct(null); setTimeout(() => setSelectedProduct(p), 50); window.scrollTo(0, 0); }} className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
+                              <div key={p.id} onClick={() => { setSelectedProduct(null); setTimeout(() => setSelectedProduct(p), 50); window.scrollTo(0, 0); }} className="group cursor-pointer bg-surface rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
                                   <div className="relative w-full pt-[100%] bg-slate-100">
                                      {p.imageUrl ? (
                                         <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -424,7 +424,7 @@ export default function AppRevendedor() {
                                   </div>
                                   <div className="p-4 border-t border-slate-50">
                                      <h4 className="font-bold text-slate-700 text-sm mb-2 leading-tight group-hover:text-purple-600 transition-colors uppercase">{p.name}</h4>
-                                     <div className="flex items-center gap-1.5 bg-slate-50 text-[10px] text-slate-400 font-bold uppercase tracking-widest px-2 py-1 rounded w-fit mt-2">
+                                     <div className="flex items-center gap-1.5 bg-background text-[10px] text-slate-400 font-bold uppercase tracking-widest px-2 py-1 rounded w-fit mt-2">
                                         <Tag size={10}/> {p.category}
                                      </div>
                                   </div>
@@ -435,36 +435,36 @@ export default function AppRevendedor() {
                  )}
 
                  {/* SEÇÃO DE FATURAMENTO (AQUÉM DE TUDO) */}
-                 <div className="mt-20 pt-20 border-t border-dashed border-slate-300" id="faturar">
+                 <div className="mt-20 pt-20 border-t border-dashed border-border-dim" id="faturar">
                     <div className="text-center mb-12">
-                        <span className="inline-block py-1.5 px-4 rounded-full bg-slate-900 text-white font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
+                        <span className="inline-block py-1.5 px-4 rounded-full bg-slate-900  text-white font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
                            Fluxo de Venda Final
                         </span>
-                        <h2 className="text-4xl font-black text-slate-900 tracking-tight">Faturar Pedido</h2>
-                        <p className="text-slate-500 mt-3 max-w-md mx-auto">Insira seu PIN para liberar a precificação do cliente e gerar o link de pagamento.</p>
+                        <h2 className="text-4xl font-black text-main tracking-tight uppercase">Faturar Pedido</h2>
+                        <p className="text-dim mt-3 max-w-md mx-auto">Insira seu PIN para liberar a precificação do cliente e gerar o link de pagamento.</p>
                     </div>
 
                     {!isBillingUnlocked ? (
-                         <div className="max-w-md mx-auto bg-white p-10 rounded-[2rem] shadow-xl border border-slate-100 text-center animate-in fade-in zoom-in duration-500">
-                             <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-8 text-slate-800 shadow-inner">
+                         <div className="max-w-md mx-auto bg-surface -900 p-10 rounded-[2rem] shadow-xl border border-border-dim text-center animate-in fade-in zoom-in duration-500">
+                             <div className="w-20 h-20 bg-surface-hover -800 border border-border-dim rounded-3xl flex items-center justify-center mx-auto mb-8 text-main shadow-inner">
                                  <Lock size={32} />
                              </div>
                              
                              <form onSubmit={handleUnlockBilling} className="space-y-6">
                                  <div className="space-y-2">
-                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sua Senha de Acesso</label>
+                                     <label className="text-[10px] font-bold text-dim uppercase tracking-widest">Sua Senha de Acesso</label>
                                      <input 
                                          required type="password" placeholder="••••" value={billingPin} onChange={e=>setBillingPin(e.target.value)}
-                                         className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-black text-center text-3xl tracking-[0.5em] focus:border-purple-500 focus:bg-white outline-none transition-all" 
+                                         className="w-full p-5 bg-surface-hover -800 border border-border-dim rounded-2xl font-black text-center text-3xl tracking-[0.5em] focus:border-purple-500 dark:focus:border-purple-400 focus:bg-surface outline-none transition-all text-main" 
                                      />
                                  </div>
-                                 <button type="submit" className="w-full bg-slate-900 text-white font-bold p-5 rounded-2xl flex justify-center items-center gap-3 hover:bg-slate-800 transition active:scale-95 shadow-xl">
+                                 <button type="submit" className="w-full bg-slate-900  text-white font-bold p-5 rounded-2xl flex justify-center items-center gap-3 hover:bg-slate-800 transition active:scale-95 shadow-xl">
                                      Desbloquear Faturamento <ArrowRight size={20}/>
                                  </button>
                              </form>
                          </div>
                       ) : (
-                         <form id="affiliate-checkout-form" onSubmit={handleCreateSale} className="max-w-4xl mx-auto bg-white p-6 md:p-12 rounded-[2.5rem] border border-slate-200 space-y-12 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
+                         <form id="affiliate-checkout-form" onSubmit={handleCreateSale} className="max-w-4xl mx-auto bg-surface -900 p-6 md:p-12 rounded-[2.5rem] border border-border-dim space-y-12 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
                             
                             <div className="flex items-center gap-4 bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
                                 <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg active:animate-bounce">
@@ -472,13 +472,13 @@ export default function AppRevendedor() {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Autenticação Concluída</p>
-                                    <p className="text-sm font-bold text-slate-800">Liberado por {affiliate.name.split(' ')[0]}</p>
+                                    <p className="text-sm font-bold text-main">Liberado por {affiliate.name.split(' ')[0]}</p>
                                 </div>
                             </div>
 
                             {/* Passo 1: Tamanho Confirmado */}
                             <section>
-                               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-3">
+                               <h3 className="text-sm font-bold text-main uppercase tracking-widest mb-6 flex items-center gap-3">
                                    <span className="bg-purple-600 text-white w-7 h-7 flex items-center justify-center rounded-xl text-xs shadow-md">1</span> 
                                    Tamanho Desejado
                                </h3>
@@ -489,7 +489,7 @@ export default function AppRevendedor() {
                                       return (
                                         <button 
                                           key={size} type="button" onClick={() => setSelectedSize(size)}
-                                          className={`flex flex-col items-center justify-center h-20 w-24 rounded-2xl border-2 transition-all ${selectedSize === size ? 'border-purple-600 bg-purple-50 text-purple-700 shadow-md transform -translate-y-1' : 'border-slate-100 hover:border-slate-200 text-slate-400 bg-white'}`}
+                                          className={`flex flex-col items-center justify-center h-20 w-24 rounded-2xl border-2 transition-all ${selectedSize === size ? 'border-purple-600 bg-purple-50 text-purple-700 shadow-md transform -translate-y-1' : 'border-slate-100 hover:border-border-dim text-slate-400 bg-surface'}`}
                                         >
                                            <span className="font-black text-xl">{size}</span>
                                            <span className={`text-[9px] uppercase font-bold tracking-widest ${isAvail ? 'text-emerald-500' : 'text-amber-500'}`}>
@@ -504,12 +504,12 @@ export default function AppRevendedor() {
 
                             {/* Passo 2: Precificação */}
                             <section>
-                               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-3">
+                               <h3 className="text-sm font-bold text-main uppercase tracking-widest mb-6 flex items-center gap-3">
                                    <span className="bg-purple-600 text-white w-7 h-7 flex items-center justify-center rounded-xl text-xs shadow-md">2</span> 
                                    Preço Final da Venda
                                </h3>
                                
-                               <div className={`p-8 rounded-3xl border-2 transition-all bg-slate-50/50 ${isPriceInvalid ? 'border-red-400 bg-red-50/10' : 'border-indigo-100 focus-within:border-purple-500 focus-within:bg-white'}`}>
+                               <div className={`p-8 rounded-3xl border-2 transition-all bg-background/50 ${isPriceInvalid ? 'border-red-400 bg-red-50/10' : 'border-indigo-100 focus-within:border-purple-500 focus-within:bg-surface'}`}>
                                    <div className="flex items-center">
                                       <span className={`text-3xl font-black mr-3 ${isPriceInvalid ? 'text-red-400' : 'text-purple-400'}`}>R$</span>
                                       <input 
@@ -528,30 +528,30 @@ export default function AppRevendedor() {
 
                             {/* Passo 3: Dados Cliente */}
                             <section>
-                               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-3">
+                               <h3 className="text-sm font-bold text-main uppercase tracking-widest mb-6 flex items-center gap-3">
                                    <span className="bg-purple-600 text-white w-7 h-7 flex items-center justify-center rounded-xl text-xs shadow-md">3</span> 
                                    Dados do Cliente Final
                                </h3>
                                <div className="grid grid-cols-1 gap-5">
-                                  <input required type="text" placeholder="Nome Completo" value={customerName} onChange={e=>setCustomerName(e.target.value)} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl font-bold focus:border-purple-500 focus:bg-white outline-none transition-all shadow-sm" />
+                                  <input required type="text" placeholder="Nome Completo" value={customerName} onChange={e=>setCustomerName(e.target.value)} className="w-full p-5 bg-background border border-slate-100 rounded-2xl font-bold focus:border-purple-500 focus:bg-surface outline-none transition-all shadow-sm" />
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                      <input required type="text" placeholder="CPF (Apenas números)" value={customerCpf} onChange={handleCpfChange} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl font-bold focus:border-purple-500 focus:bg-white outline-none transition-all shadow-sm" />
-                                      <input required type="text" placeholder="WhatsApp" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl font-bold focus:border-purple-500 focus:bg-white outline-none transition-all shadow-sm" />
+                                      <input required type="text" placeholder="CPF (Apenas números)" value={customerCpf} onChange={handleCpfChange} className="w-full p-5 bg-background border border-slate-100 rounded-2xl font-bold focus:border-purple-500 focus:bg-surface outline-none transition-all shadow-sm" />
+                                      <input required type="text" placeholder="WhatsApp" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} className="w-full p-5 bg-background border border-slate-100 rounded-2xl font-bold focus:border-purple-500 focus:bg-surface outline-none transition-all shadow-sm" />
                                   </div>
                                   
-                                  <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 mt-4">
+                                  <div className="bg-background p-6 rounded-[2rem] border border-slate-100 mt-4">
                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6 text-center">Destinatário & Logística</p>
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
-                                         <input required type="text" placeholder="CEP" value={customerCep} onChange={e=>setCustomerCep(e.target.value)} className="w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
-                                         <input required type="text" placeholder="Rua / Avenida" value={customerAddress} onChange={e=>setCustomerAddress(e.target.value)} className="md:col-span-2 w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                         <input required type="text" placeholder="CEP" value={customerCep} onChange={e=>setCustomerCep(e.target.value)} className="w-full p-5 bg-surface border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                         <input required type="text" placeholder="Rua / Avenida" value={customerAddress} onChange={e=>setCustomerAddress(e.target.value)} className="md:col-span-2 w-full p-5 bg-surface border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
                                      </div>
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
-                                         <input required type="text" placeholder="Nº" value={customerNumber} onChange={e=>setCustomerNumber(e.target.value)} className="w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
-                                         <input required type="text" placeholder="Cidade / Bairro" value={customerNeighborhood} onChange={e=>setCustomerNeighborhood(e.target.value)} className="md:col-span-2 w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                         <input required type="text" placeholder="Nº" value={customerNumber} onChange={e=>setCustomerNumber(e.target.value)} className="w-full p-5 bg-surface border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                         <input required type="text" placeholder="Cidade / Bairro" value={customerNeighborhood} onChange={e=>setCustomerNeighborhood(e.target.value)} className="md:col-span-2 w-full p-5 bg-surface border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
                                      </div>
                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                         <input type="text" placeholder="Complemento" value={customerComplement} onChange={e=>setCustomerComplement(e.target.value)} className="w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
-                                         <input required type="text" placeholder="Estado (Ex: SP)" value={customerState} onChange={e=>setCustomerState(e.target.value)} className="w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                         <input type="text" placeholder="Complemento" value={customerComplement} onChange={e=>setCustomerComplement(e.target.value)} className="w-full p-5 bg-surface border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                         <input required type="text" placeholder="Estado (Ex: SP)" value={customerState} onChange={e=>setCustomerState(e.target.value)} className="w-full p-5 bg-surface border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
                                      </div>
                                   </div>
                                </div>
@@ -581,24 +581,27 @@ export default function AppRevendedor() {
   // VIEW: MAIN CATALOG GRID
   // -------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 font-sans">
+    <div className="min-h-screen bg-background pb-20 font-sans">
       
       {/* Header Afiliado */}
-      <header className="bg-slate-900 text-white p-6 sticky top-0 z-10 shadow-lg">
+      <header className="bg-slate-900  text-white p-6 sticky top-0 z-10 shadow-lg px-2">
          <div className="max-w-6xl mx-auto flex justify-between items-center">
             <div>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">PORTAL DE PARCEIRO B2B</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">PORTAL DE PARCEIRO B2B</p>
               <h1 className="text-xl font-bold mt-1 text-slate-100">{affiliate.name}</h1>
             </div>
-            <button onClick={() => setShowLogin(true)} className="bg-slate-800 p-3 rounded-full border border-slate-700 hover:bg-slate-700 transition active:scale-95 cursor-pointer">
-               <TrendingUp className="text-purple-400" />
-            </button>
+            <div className="flex items-center gap-2">
+               {/* Re-using theme logic here if needed, but the main Navbar handles it */}
+               <button onClick={() => setShowLogin(true)} className="bg-slate-800 p-3 rounded-full border border-slate-700 hover:bg-slate-700 transition active:scale-95 cursor-pointer">
+                  <TrendingUp className="text-purple-400" />
+               </button>
+            </div>
          </div>
       </header>
 
       {/* Grid Catálogo */}
       <main className="max-w-6xl mx-auto p-4 md:p-8 mt-4">
-         <h2 className="text-3xl font-bold text-slate-800 mb-6 font-logo">ACERVO KORA IMPORTADOS</h2>
+         <h2 className="text-3xl font-bold text-main mb-6 font-logo">ACERVO KORA IMPORTADOS</h2>
          
          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
              {/* Categories Navigation */}
@@ -610,7 +613,7 @@ export default function AppRevendedor() {
                       className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm transition-all border ${
                          activeCategory === cat 
                             ? 'bg-purple-600 text-white border-purple-600 shadow-md transform scale-105' 
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                            : 'bg-surface text-dim border-border-dim hover:bg-background'
                       }`}
                    >
                       {cat}
@@ -624,10 +627,10 @@ export default function AppRevendedor() {
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-bold text-sm transition-all border-2 shadow-sm active:scale-95 ${
                     showOnlyAvailable 
                     ? 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-100' 
-                    : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'
+                    : 'bg-surface text-slate-500 border-slate-100 hover:border-border-dim'
                 }`}
              >
-                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${showOnlyAvailable ? 'border-white bg-white' : 'border-slate-200 bg-transparent'}`}>
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${showOnlyAvailable ? 'border-white bg-surface' : 'border-border-dim bg-transparent'}`}>
                     {showOnlyAvailable && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
                 </div>
                 {showOnlyAvailable ? 'Apenas Pronta Entrega' : 'Mostrar Tudo (Acervo)'}
@@ -647,22 +650,22 @@ export default function AppRevendedor() {
                 const hasStock = totalStock > 0;
 
                 return (
-                  <div key={product.id} onClick={() => handleOpenProduct(product)} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col">
-                     <div className="relative w-full pt-[100%] bg-slate-100">
+                  <div key={product.id} onClick={() => handleOpenProduct(product)} className="bg-surface -900 rounded-3xl overflow-hidden shadow-sm border border-border-dim hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col">
+                     <div className="relative w-full pt-[100%] bg-surface-hover">
                         {product.imageUrl ? (
                             <img src={product.imageUrl} alt={product.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         ) : (
                             <div className="absolute inset-0 flex items-center justify-center font-logo text-slate-300 text-3xl">KORA</div>
                         )}
                         <div className="absolute top-3 left-3">
-                            <span className={`px-3 py-1 text-[10px] md:text-xs font-bold rounded-lg uppercase tracking-wider backdrop-blur-md shadow-lg ${hasStock ? 'bg-black/80 text-white' : 'bg-white/90 text-slate-800'}`}>
+                            <span className={`px-3 py-1 text-[10px] md:text-xs font-bold rounded-lg uppercase tracking-wider backdrop-blur-md shadow-lg ${hasStock ? 'bg-black/80 text-white' : 'bg-surface/90 text-main'}`}>
                                 {hasStock ? 'Pronta Entrega' : 'Longo Prazo'}
                             </span>
                         </div>
                      </div>
                      <div className="p-4 md:p-5 flex-1 flex flex-col justify-between">
-                         <h3 className="font-bold text-slate-800 leading-tight group-hover:text-purple-600 transition-colors">{product.name}</h3>
-                         <div className="text-xs text-slate-400 mt-2 flex items-center gap-1 font-bold"><Tag size={12}/> IMPORTADA THAI 1:1</div>
+                         <h3 className="font-bold text-main leading-tight group-hover:text-purple-600 transition-colors uppercase">{product.name}</h3>
+                         <div className="text-[10px] text-dim mt-2 flex items-center gap-1 font-bold uppercase tracking-widest"><Tag size={12}/> Thai Premium 1:1</div>
                      </div>
                   </div>
                 )
@@ -673,22 +676,22 @@ export default function AppRevendedor() {
        {/* Login Modal */}
        {showLogin && (
          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl relative">
-               <button onClick={() => setShowLogin(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 p-2"><X size={20}/></button>
+            <div className="bg-surface rounded-3xl p-8 w-full max-w-sm shadow-2xl relative">
+               <button onClick={() => setShowLogin(false)} className="absolute top-4 right-4 text-slate-400 hover:text-main p-2"><X size={20}/></button>
                <div className="mb-6 text-center">
                   <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4"><Lock size={32}/></div>
-                  <h3 className="text-xl font-bold text-slate-800">Acesso Restrito</h3>
+                  <h3 className="text-xl font-bold text-main">Acesso Restrito</h3>
                   <p className="text-sm text-slate-500 mt-1">Insira suas credenciais gerenciais B2B.</p>
                </div>
                
                <form onSubmit={handleDashboardLogin} className="space-y-4">
                   <div>
-                     <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">E-mail</label>
-                     <input required type="email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} className="w-full mt-1 p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition font-medium text-slate-800" placeholder="Seu e-mail de acesso"/>
+                     <label className="text-xs font-bold text-dim uppercase tracking-widest">E-mail</label>
+                     <input required type="email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} className="w-full mt-1 p-4 bg-background border border-border-dim rounded-xl outline-none focus:border-purple-500 transition font-medium text-main" placeholder="Seu e-mail de acesso"/>
                   </div>
                   <div>
-                     <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Senha PIN</label>
-                     <input required type="password" value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} className="w-full mt-1 p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition font-medium text-slate-800" placeholder="Sua senha"/>
+                     <label className="text-xs font-bold text-dim uppercase tracking-widest">Senha PIN</label>
+                     <input required type="password" value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} className="w-full mt-1 p-4 bg-background border border-border-dim rounded-xl outline-none focus:border-purple-500 transition font-medium text-main" placeholder="Sua senha"/>
                   </div>
                   <button type="submit" className="w-full mt-2 p-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-md transition-transform active:scale-95 text-lg">
                      Acessar Meu Painel
@@ -702,12 +705,12 @@ export default function AppRevendedor() {
        {isLogged && (
          <div className="fixed inset-0 z-[100] flex justify-end">
              <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsLogged(false)} />
-             <div className="relative w-full max-w-2xl h-full bg-slate-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+             <div className="relative w-full max-w-2xl h-full bg-background shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
                  
-                 <div className="flex items-center justify-between p-6 border-b border-indigo-100 bg-white">
+                 <div className="flex items-center justify-between p-6 border-b border-indigo-100 bg-surface">
                      <div>
                          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest"><TrendingUp size={12} className="inline mr-1"/> DASHBOARD B2B KORA</p>
-                         <h2 className="font-bold text-2xl text-slate-800 leading-tight mt-1">{affiliate.name}</h2>
+                         <h2 className="font-bold text-2xl text-main leading-tight mt-1">{affiliate.name}</h2>
                      </div>
                      <button onClick={() => setIsLogged(false)} className="text-slate-400 hover:text-slate-900 transition p-2 bg-slate-100 rounded-full shadow-sm font-bold flex items-center gap-2 text-xs uppercase px-4"><X size={16} /> Fechar Painel</button>
                  </div>
@@ -723,7 +726,7 @@ export default function AppRevendedor() {
                                  <p className="text-2xl font-black text-emerald-800 mt-1">R$ {affiliateOrders.filter(o => o.status === "Pago" || o.status === "Concluído" || o.status === "Finalizado").reduce((a, b) => a + (b.commission || 0), 0).toFixed(2).replace('.', ',')}</p>
                                  <p className="text-[10px] text-emerald-600 font-bold mt-1 uppercase">Saldo Final</p>
                               </div>
-                              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                              <div className="bg-surface p-5 rounded-2xl shadow-sm border border-slate-100">
                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">A Receber</p>
                                  <p className="text-2xl font-black text-amber-600 mt-1">R$ {affiliateOrders.filter(o => o.status === "Aguardando Pagamento do Cliente" || o.status === "Aguardando Pagamento").reduce((a, b) => a + (b.commission || 0), 0).toFixed(2).replace('.', ',')}</p>
                                  <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">Boletos/Pix pendentes</p>
@@ -732,18 +735,18 @@ export default function AppRevendedor() {
 
                           {/* Lista de Carrinhos (Cobrança Zap) */}
                           <div>
-                              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-200 pb-2"><Users size={18}/> Funil de Cobrança (Faturas Pendentes)</h3>
+                              <h3 className="font-bold text-main mb-4 flex items-center gap-2 border-b border-border-dim pb-2"><Users size={18}/> Funil de Cobrança (Faturas Pendentes)</h3>
                               <div className="space-y-3">
                                   {affiliateOrders.filter(o => o.status === "Aguardando Pagamento do Cliente" || o.status === "Aguardando Pagamento").map((order) => (
-                                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 flex items-center justify-between">
+                                      <div key={order.id} className="bg-surface p-4 rounded-xl shadow-sm border border-amber-100 flex items-center justify-between">
                                          <div>
-                                            <p className="font-bold text-sm text-slate-800">{order.client.name}</p>
+                                            <p className="font-bold text-sm text-main">{order.client.name}</p>
                                             <p className="text-xs font-mono text-slate-400 mt-0.5">Venda de R$ {order.total?.toFixed(2).replace('.', ',')}</p>
                                          </div>
                                           <div className="flex gap-2">
                                              <button 
                                                 onClick={() => handleCopyLink(order.id)}
-                                                className={`p-2 rounded-lg transition border ${copiedId === order.id ? 'bg-purple-600 border-purple-600 text-white' : 'bg-slate-50 border-slate-100 text-slate-400 hover:text-purple-600 hover:border-purple-200'}`}
+                                                className={`p-2 rounded-lg transition border ${copiedId === order.id ? 'bg-purple-600 border-purple-600 text-white' : 'bg-background border-slate-100 text-slate-400 hover:text-purple-600 hover:border-purple-200'}`}
                                                 title="Copiar Link de Pagamento"
                                              >
                                                 {copiedId === order.id ? <Check size={16}/> : <Copy size={16}/>}
@@ -759,19 +762,19 @@ export default function AppRevendedor() {
                                       </div>
                                   ))}
                                   {affiliateOrders.filter(o => o.status === "Aguardando Pagamento do Cliente" || o.status === "Aguardando Pagamento").length === 0 && (
-                                      <p className="text-sm text-slate-500 italic p-4 text-center bg-white rounded-xl border border-dashed border-slate-200">Nenhum cliente para ser cobrado hoje.</p>
+                                      <p className="text-sm text-slate-500 italic p-4 text-center bg-surface rounded-xl border border-dashed border-border-dim">Nenhum cliente para ser cobrado hoje.</p>
                                   )}
                               </div>
                           </div>
 
                           {/* Histórico Geral */}
                           <div>
-                              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-200 pb-2"><Briefcase size={18}/> Faturas Geradas (Suas Vendas)</h3>
+                              <h3 className="font-bold text-main mb-4 flex items-center gap-2 border-b border-border-dim pb-2"><Briefcase size={18}/> Faturas Geradas (Suas Vendas)</h3>
                               <div className="space-y-3">
                                   {affiliateOrders.map((order) => (
-                                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-2">
+                                      <div key={order.id} className="bg-surface p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-2">
                                          <div className="flex justify-between items-start">
-                                            <p className="font-bold text-sm text-slate-800 truncate pr-4">{order.client.name}</p>
+                                            <p className="font-bold text-sm text-main truncate pr-4">{order.client.name}</p>
                                             <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded w-fit capitalize ${order.status.includes('Pago') || order.status.includes('Concluído') || order.status.includes('Finalizado') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                                {order.status}
                                             </span>
