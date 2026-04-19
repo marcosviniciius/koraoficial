@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, doc, getDoc, addDoc, setDoc, serverTimestamp, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, TrendingUp, ShieldCheck, Tag, ShoppingBag, ArrowRight, X, Users, Briefcase, Lock, Star, RotateCcw, Ruler, ShoppingCart, Zap } from "lucide-react";
+import { ChevronLeft, TrendingUp, ShieldCheck, Tag, ShoppingBag, ArrowRight, X, Users, Briefcase, Lock, Star, RotateCcw, Ruler, ShoppingCart, Zap, Copy, Check, Share2, MessageCircle } from "lucide-react";
 
 export default function AppRevendedor() {
   const { id } = useParams();
@@ -46,6 +46,8 @@ export default function AppRevendedor() {
   const [isBillingUnlocked, setIsBillingUnlocked] = useState(false);
   const [billingPin, setBillingPin] = useState("");
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
+  const [createdOrderData, setCreatedOrderData] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     async function loadApp() {
@@ -157,9 +159,14 @@ export default function AppRevendedor() {
            }, { merge: true });
        }
 
-       alert("Pedido faturado com sucesso! Redirecionando para a fatura do cliente...");
-       router.push(`/pagamento/${docRef.id}`);
+       setCreatedOrderData({ id: docRef.id, total: parseFloat(sellingPrice), clientName: customerName, clientPhone: customerPhone });
        setIsSubmitting(false);
+       
+       // Limpar formulário para próxima venda
+       setCustomerName(""); setCustomerCpf(""); setCustomerPhone(""); setCustomerCep("");
+       setCustomerAddress(""); setCustomerNumber(""); setCustomerComplement("");
+       setCustomerNeighborhood(""); setCustomerCity(""); setCustomerState("");
+       setSelectedSize(""); setIsBillingUnlocked(false); setBillingPin("");
     } catch (e) {
        console.error(e);
        alert("Erro ao faturar pedido.");
@@ -202,8 +209,82 @@ export default function AppRevendedor() {
   if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Carregando Acervo Premium...</div>;
   if (!affiliate) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-red-500 font-bold">Revendedor não encontrado. Link Inválido.</div>;
 
+  const handleCopyLink = (orderId) => {
+    const url = `${window.location.origin}/pagamento/${orderId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(orderId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // -------------------------------------------------------------
+  // VIEW: SUCCESS ORDER SHARE
+  // -------------------------------------------------------------
+  if (createdOrderData) {
+      const paymentUrl = `${window.location.origin}/pagamento/${createdOrderData.id}`;
+      const waMessage = encodeURIComponent(`Olá ${createdOrderData.clientName.split(' ')[0]}! Aqui está o link para o pagamento da sua camisa Kora: ${paymentUrl}`);
+      const waLink = `https://wa.me/55${createdOrderData.clientPhone.replace(/\D/g, '')}?text=${waMessage}`;
+
+      return (
+          <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+              <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-lg w-full text-center shadow-2xl animate-in zoom-in duration-500">
+                  <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                      <ShieldCheck size={40} />
+                  </div>
+                  <h2 className="text-3xl font-black text-slate-900 mb-2">Pedido Faturado!</h2>
+                  <p className="text-slate-500 mb-8 px-4 text-sm">O pedido foi registrado no sistema. Agora escolha como deseja enviar a fatura para o cliente:</p>
+
+                  <div className="space-y-4">
+                      {/* Cópia de Link */}
+                      <button 
+                        onClick={() => handleCopyLink(createdOrderData.id)}
+                        className="w-full p-5 rounded-2xl border-2 border-slate-100 hover:border-purple-500 hover:bg-purple-50 flex items-center justify-between transition-all group"
+                      >
+                         <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                {copiedId === createdOrderData.id ? <Check size={20}/> : <Copy size={20}/>}
+                            </div>
+                            <span className="font-bold text-slate-700">Copiar Link de Pagamento</span>
+                         </div>
+                         {copiedId === createdOrderData.id && <span className="text-[10px] bg-purple-600 text-white px-2 py-1 rounded font-bold uppercase">Copiado!</span>}
+                      </button>
+
+                      {/* Enviar WhatsApp */}
+                      <a 
+                        href={waLink} target="_blank" rel="noopener noreferrer"
+                        className="w-full p-5 rounded-2xl bg-[#25D366] hover:bg-[#1DA851] text-white flex items-center justify-between transition-all shadow-lg hover:shadow-[#25D366]/30"
+                      >
+                         <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                <MessageCircle size={20}/>
+                            </div>
+                            <span className="font-bold">Enviar pelo WhatsApp</span>
+                         </div>
+                         <ArrowRight size={20}/>
+                      </a>
+                  </div>
+
+                  <div className="mt-12 flex flex-col gap-3">
+                      <button 
+                         onClick={() => setCreatedOrderData(null)}
+                         className="text-slate-500 font-bold text-sm hover:text-slate-800 transition py-2"
+                      >
+                         Fazer novo pedido
+                      </button>
+                      <button 
+                         onClick={() => { setCreatedOrderData(null); setSelectedProduct(null); }}
+                         className="bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 font-bold p-4 rounded-xl transition-all"
+                      >
+                         Voltar ao Catálogo
+                      </button>
+                  </div>
+              </div>
+          </div>
+      );
+  }
+
   // -------------------------------------------------------------
   // VIEW: FULL PAGE PRODUCT DETAILS
+
   if (selectedProduct) {
       const similarProducts = products.filter(p => p.category === selectedProduct.category && p.id !== selectedProduct.id).slice(0, 4);
       return (
@@ -659,13 +740,22 @@ export default function AppRevendedor() {
                                             <p className="font-bold text-sm text-slate-800">{order.client.name}</p>
                                             <p className="text-xs font-mono text-slate-400 mt-0.5">Venda de R$ {order.total?.toFixed(2).replace('.', ',')}</p>
                                          </div>
-                                          <a 
-                                            href={`https://wa.me/55${order.client.phone?.replace(/\D/g, '')}?text=Oi ${order.client.name.split(' ')[0]}, vi que você gerou um pedido na Kora através de mim, mas seu PIX está pendente!`}
-                                            target="_blank" rel="noopener noreferrer"
-                                            className="text-white bg-[#25D366] hover:bg-[#1DA851] text-xs font-bold uppercase tracking-widest py-2 px-4 rounded-lg shadow-sm transition"
-                                         >
-                                            Cobrar Cliente
-                                          </a>
+                                          <div className="flex gap-2">
+                                             <button 
+                                                onClick={() => handleCopyLink(order.id)}
+                                                className={`p-2 rounded-lg transition border ${copiedId === order.id ? 'bg-purple-600 border-purple-600 text-white' : 'bg-slate-50 border-slate-100 text-slate-400 hover:text-purple-600 hover:border-purple-200'}`}
+                                                title="Copiar Link de Pagamento"
+                                             >
+                                                {copiedId === order.id ? <Check size={16}/> : <Copy size={16}/>}
+                                             </button>
+                                             <a 
+                                                href={`https://wa.me/55${order.client.phone?.replace(/\D/g, '')}?text=Oi ${order.client.name.split(' ')[0]}! Aqui está o link para o pagamento da sua camisa Kora: ${window.location.origin}/pagamento/${order.id}`}
+                                                target="_blank" rel="noopener noreferrer"
+                                                className="text-white bg-[#25D366] hover:bg-[#1DA851] text-xs font-bold uppercase tracking-widest py-2 px-4 rounded-lg shadow-sm transition flex items-center gap-2"
+                                             >
+                                                <MessageCircle size={14}/> Cobrar
+                                             </a>
+                                          </div>
                                       </div>
                                   ))}
                                   {affiliateOrders.filter(o => o.status === "Aguardando Pagamento do Cliente" || o.status === "Aguardando Pagamento").length === 0 && (

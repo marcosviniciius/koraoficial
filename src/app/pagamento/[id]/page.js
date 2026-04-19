@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useParams, useRouter } from "next/navigation";
 import { CheckCircle2, ShieldCheck, Lock, CreditCard } from "lucide-react";
@@ -9,26 +9,37 @@ export default function CheckoutExclusivo() {
   const { id } = useParams();
   const router = useRouter();
   
-  const [order, setOrder] = useState(null);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    async function loadOrder() {
+    async function loadOrders() {
       try {
-        const docRef = doc(db, "orders", id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setOrder({ id: docSnap.id, ...docSnap.data() });
+        const idList = id.split(',');
+        const loadedOrders = [];
+        
+        for (const orderId of idList) {
+          const docRef = doc(db, "orders", orderId.trim());
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            loadedOrders.push({ id: docSnap.id, ...docSnap.data() });
+          }
         }
+        
+        setOrders(loadedOrders);
       } catch (error) {
         console.error("Erro ao carregar link", error);
       }
       setLoading(false);
     }
-    loadOrder();
+    loadOrders();
   }, [id]);
+
+  const totalCalculated = orders.reduce((sum, o) => sum + o.total, 0);
+  const allItems = orders.flatMap(o => o.items);
+  const allPaid = orders.length > 0 && orders.every(o => o.status === "Pago" || o.status === "Concluído");
 
   const handlePayment = async () => {
     setProcessing(true);
@@ -42,7 +53,6 @@ export default function CheckoutExclusivo() {
         const data = await response.json();
 
         if (data.init_point) {
-            // Redireciona para o Mercado Pago
             window.location.href = data.init_point;
         } else {
             throw new Error(data.error || "Erro ao gerar link de pagamento");
@@ -56,17 +66,17 @@ export default function CheckoutExclusivo() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-500">Criptografando ambiente...</div>;
-  if (!order) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Fatura não encontrada. Verifique o link.</div>;
+  if (orders.length === 0) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Fatura não encontrada. Verifique o link.</div>;
 
-  if (order.status === "Pago" || success) {
+  if (allPaid || success) {
      return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
            <div className="bg-white max-w-md w-full p-8 rounded-3xl shadow-xl text-center">
               <div className="bg-green-100 p-4 rounded-full inline-block mx-auto mb-6"><CheckCircle2 size={48} className="text-green-600"/></div>
               <h2 className="text-2xl font-bold text-slate-800 mb-2">Pagamento Aprovado</h2>
-              <p className="text-slate-600 mb-6">O seu pagamento de <strong className="text-slate-800">R$ {order.total.toFixed(2).replace('.',',')}</strong> foi recebido com sucesso e seu pedido já está sendo processado na logística Kora.</p>
+              <p className="text-slate-600 mb-6">O seu pagamento de <strong className="text-slate-800">R$ {totalCalculated.toFixed(2).replace('.',',')}</strong> foi recebido com sucesso e seu pedido já está sendo processado na logística Kora.</p>
               <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm font-mono text-slate-500 mb-6 flex flex-col gap-1">
-                 <span>Recibo: {order.id.toUpperCase()}</span>
+                 <span>Recibo: {id.split(',')[0].toUpperCase()}...</span>
                  <span>Data: {new Date().toLocaleDateString('pt-BR')}</span>
               </div>
            </div>
@@ -91,7 +101,7 @@ export default function CheckoutExclusivo() {
                  <h2 className="text-2xl font-bold text-slate-800 mb-4">Resumo do Pedido</h2>
                  
                  <div className="space-y-4">
-                     {order.items.map((item, idx) => (
+                     {allItems.map((item, idx) => (
                          <div key={idx} className="flex justify-between items-center pb-4 border-b border-slate-50">
                              <div>
                                 <p className="font-bold text-slate-800">{item.name}</p>
@@ -103,7 +113,7 @@ export default function CheckoutExclusivo() {
                  
                  <div className="mt-6 pt-6 border-t-2 border-dashed border-slate-200">
                     <p className="text-sm font-bold text-slate-500 uppercase tracking-widest text-center mb-2">Total A Pagar</p>
-                    <p className="text-5xl font-black text-slate-900 text-center">R$ {order.total.toFixed(2).replace('.', ',')}</p>
+                    <p className="text-5xl font-black text-slate-900 text-center">R$ {totalCalculated.toFixed(2).replace('.', ',')}</p>
                  </div>
               </div>
 
@@ -116,7 +126,7 @@ export default function CheckoutExclusivo() {
                    className="w-full bg-[var(--color-kora-blue)] text-white font-bold text-lg p-5 rounded-xl flex items-center justify-center gap-3 hover:bg-blue-800 transition disabled:opacity-50 active:scale-95 shadow-lg shadow-blue-900/40"
                  >
                     {processing ? <Lock className="animate-spin" /> : <Lock />} 
-                    {processing ? "Gerando Link Seguro..." : "Pagar Agora R$ " + order.total.toFixed(2).replace('.',',')}
+                    {processing ? "Gerando Link Seguro..." : "Pagar Agora R$ " + totalCalculated.toFixed(2).replace('.',',')}
                  </button>
                  <div className="mt-4 flex items-center justify-center gap-4 grayscale opacity-50">
                     <img src="https://logodownload.org/wp-content/uploads/2019/06/mercado-pago-logo-0.png" className="h-4" alt="Mercado Pago" />

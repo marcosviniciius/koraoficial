@@ -1,24 +1,21 @@
 "use client";
 import { useCart } from "@/context/CartContext";
 import { useState } from "react";
-import { collection, addDoc, serverTimestamp, updateDoc, doc, increment, setDoc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, setDoc, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Navbar from "@/components/Navbar";
 import { Receipt, CreditCard } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const { items, totalPrice, clearCart } = useCart();
   const [formData, setFormData] = useState({
     name: "", cpf: "", email: "", phone: "",
     cep: "", address: "", number: "", complement: "", neighborhood: "", city: "", state: ""
   });
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  
-  // Guardamos os IDs dos pedidos gerados para simular o pagamento logo depois
-  const [savedOrderIds, setSavedOrderIds] = useState([]);
-  const [simulandoPagamento, setSimulandoPagamento] = useState(false);
-  const [pagamentoConcluido, setPagamentoConcluido] = useState(false);
+
 
   const handleCpfChange = async (e) => {
     let typedCpf = e.target.value.replace(/\D/g, '');
@@ -88,8 +85,9 @@ export default function CheckoutPage() {
           }, { merge: true });
       }
 
-      setSavedOrderIds(createdIds);
-      setSuccess(true);
+      clearCart();
+      // Redireciona para a página de pagamento real (pode levar múltiplos IDs se houver Pronto + Encomenda)
+      router.push(`/pagamento/${createdIds.join(',')}`);
     } catch (e) {
       console.error(e);
       alert("Erro ao processar pedido.");
@@ -98,74 +96,8 @@ export default function CheckoutPage() {
     }
   };
 
-  const simularPagamentoMercadoPago = async () => {
-      setSimulandoPagamento(true);
-      try {
-          // Fase 3 Simulador: Alterar documentos para "Pago"
-          for (let id of savedOrderIds) {
-              const orderRef = doc(db, "orders", id);
-              await updateDoc(orderRef, {
-                  status: "Pago"
-              });
-          }
-          
-          // Baixar Estoque dos produtos à Pronta Entrega
-          const immediates = items.filter(i => i.orderType === 'Imediato');
-          for (let item of immediates) {
-              const productRef = doc(db, "products", item.id);
-              await updateDoc(productRef, {
-                  [`stock.${item.selectedSize}`]: increment(-item.quantity)
-              });
-          }
+  // O retorno visual agora é tratado pela página de pagamento dedicada
 
-          clearCart();
-          setPagamentoConcluido(true);
-      } catch(e) {
-          alert("Erro ao simular Mercado Pago: " + e.message);
-      } finally {
-          setSimulandoPagamento(false);
-      }
-  };
-
-  if (pagamentoConcluido) {
-    return (
-        <div className="min-h-screen bg-slate-50 flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center p-4">
-          <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center">
-            <CreditCard size={64} className="text-[var(--color-kora-green)] mx-auto mb-4" />
-            <h2 className="font-logo text-3xl text-[var(--color-kora-blue)] mb-2">PAGAMENTO APROVADO!</h2>
-            <p className="text-gray-600 mb-8">Essa tela aparecerá quando o Mercado Pago confirmar o seu PIX/Cartão.</p>
-            <p className="text-sm border-t pt-4">Neste exato momento, o seu pedido foi transferido para a Aba da Logística no Painel Admin.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center p-4">
-          <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center">
-            <Receipt size={64} className="text-yellow-500 mx-auto mb-4 cursor-default animate-pulse" />
-            <h2 className="font-logo text-3xl text-[var(--color-kora-blue)] mb-2">AGUARDANDO PAGAMENTO</h2>
-            <p className="text-gray-600 mb-8">O seu pedido já está no sistema do lojista, mas a mercadoria só será despachada/encomendada após o acerto financeiro.</p>
-            
-            <div className="bg-blue-50 p-4 rounded-xl mb-8">
-               <p className="text-sm font-bold text-[var(--color-kora-blue)] mb-2">Checkout Mercado Pago (Simulador)</p>
-               <p className="text-xs text-blue-800">Use o botão abaixo para dizer ao nosso Banco de Dados que a compra foi quitada, para podermos testar a aba de "Pronta entrega".</p>
-            </div>
-
-            <button disabled={simulandoPagamento} onClick={simularPagamentoMercadoPago} className="w-full bg-[var(--color-kora-green)] hover:bg-[var(--color-kora-green-dark)] text-white disabled:opacity-50 font-bold py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1">
-              {simulandoPagamento ? "Aprovando..." : "SIMULAR PAGAMENTO FEITO"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">

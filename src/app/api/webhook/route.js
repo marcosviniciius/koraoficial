@@ -22,41 +22,46 @@ export async function POST(req) {
             const paymentData = await payment.get({ id: paymentId });
 
             if (paymentData.status === 'approved') {
-                const orderId = paymentData.external_reference;
+                const combinedOrderIds = paymentData.external_reference;
 
-                if (!orderId) return NextResponse.json({ ok: true });
+                if (!combinedOrderIds) return NextResponse.json({ ok: true });
 
-                // 2. Buscar pedido no Firestore
-                const orderRef = doc(db, "orders", orderId);
-                const orderSnap = await getDoc(orderRef);
+                const orderIds = combinedOrderIds.split(',');
 
-                if (orderSnap.exists()) {
-                    const order = orderSnap.data();
+                for (const orderId of orderIds) {
+                    const cleanOrderId = orderId.trim();
+                    // 2. Buscar pedido no Firestore
+                    const orderRef = doc(db, "orders", cleanOrderId);
+                    const orderSnap = await getDoc(orderRef);
 
-                    // Evitar processamento duplo (Idempotência)
-                    if (order.status !== 'Pago' && order.status !== 'Concluído') {
-                        
-                        // 3. Atualizar Status do Pedido
-                        await updateDoc(orderRef, { 
-                            status: "Pago",
-                            mercadoPagoId: paymentId,
-                            paidAt: new Date()
-                        });
+                    if (orderSnap.exists()) {
+                        const order = orderSnap.data();
 
-                        // 4. Decrementar Estoque
-                        for (const item of order.items) {
-                            const productRef = doc(db, "products", item.id);
-                            const productSnap = await getDoc(productRef);
+                        // Evitar processamento duplo (Idempotência)
+                        if (order.status !== 'Pago' && order.status !== 'Concluído') {
                             
-                            if (productSnap.exists()) {
-                                const stock = productSnap.data().stock || {};
-                                const currentStockQty = stock[item.selectedSize] || 0;
+                            // 3. Atualizar Status do Pedido
+                            await updateDoc(orderRef, { 
+                                status: "Pago",
+                                mercadoPagoId: paymentId,
+                                paidAt: new Date()
+                            });
+
+                            // 4. Decrementar Estoque
+                            for (const item of order.items) {
+                                const productRef = doc(db, "products", item.id);
+                                const productSnap = await getDoc(productRef);
                                 
-                                // Decrementa se houver estoque (Pronta Entrega)
-                                if (currentStockQty > 0) {
-                                    await updateDoc(productRef, {
-                                        [`stock.${item.selectedSize}`]: increment(-item.quantity)
-                                    });
+                                if (productSnap.exists()) {
+                                    const stock = productSnap.data().stock || {};
+                                    const currentStockQty = stock[item.selectedSize] || 0;
+                                    
+                                    // Decrementa se houver estoque (Pronta Entrega)
+                                    if (currentStockQty > 0) {
+                                        await updateDoc(productRef, {
+                                            [`stock.${item.selectedSize}`]: increment(-item.quantity)
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -69,7 +74,6 @@ export async function POST(req) {
 
     } catch (error) {
         console.error("Erro no Webhook:", error);
-        // Retornamos 200 mesmo no erro para o MP não ficar tentando infinitamente se for erro de lógica
         return NextResponse.json({ error: error.message }, { status: 200 });
     }
 }
