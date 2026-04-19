@@ -1,5 +1,5 @@
 "use client";
-import { Package, TrendingUp, LogOut, Clock, AlertCircle, Briefcase, Archive, Menu, X } from "lucide-react";
+import { Package, TrendingUp, LogOut, Clock, AlertCircle, Briefcase, Archive, Menu, X, Users } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
@@ -10,12 +10,10 @@ export default function AdminSidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
-      { href: '/gestao/dashboard', icon: Package, label: 'Pronta Entrega', activeClass: 'bg-blue-50 text-[var(--color-kora-blue)]' },
-      { href: '/gestao/encomendas', icon: Clock, label: 'Encomendas', activeClass: 'bg-yellow-50 text-yellow-700' },
-      { href: '/gestao/pendentes', icon: AlertCircle, label: 'Aguardando Pagto', activeClass: 'bg-red-50 text-red-600' },
+      { href: '/gestao/financeiro', icon: Package, label: 'Caixa & Pedidos', activeClass: 'bg-blue-50 text-[var(--color-kora-blue)]' },
+      { href: '/gestao/clientes', icon: Users, label: 'Clientes CRM', activeClass: 'bg-indigo-50 text-indigo-600' },
       { href: '/gestao/afiliados', icon: Briefcase, label: 'Afiliados B2B', activeClass: 'bg-purple-50 text-purple-600' },
-      { href: '/gestao/historico', icon: Archive, label: 'Histórico Final', activeClass: 'bg-emerald-50 text-emerald-600' },
-      { href: '/gestao/produtos', icon: TrendingUp, label: 'Produtos', activeClass: 'bg-blue-50 text-[var(--color-kora-blue)]' },
+      { href: '/gestao/produtos', icon: TrendingUp, label: 'Produtos', activeClass: 'bg-emerald-50 text-emerald-600' },
   ];
 
   return (

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AdminSidebar from "@/components/AdminSidebar";
-import { LogOut, Plus, Trash2, Upload, Target, Package, Pencil } from "lucide-react";
+import { LogOut, Plus, Trash2, Upload, Target, Package, Pencil, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // Função Universal para Comprimir e Converter Imagens em Texto (Base64)
@@ -48,6 +48,8 @@ export default function GestaoProdutos() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("Geral");
   const router = useRouter();
 
   // Form states
@@ -56,6 +58,9 @@ export default function GestaoProdutos() {
   const [category, setCategory] = useState("Lançamentos");
   const [imageFile, setImageFile] = useState(null);
   const [existingImageUrl, setExistingImageUrl] = useState(null);
+
+  const [sizeChartFile, setSizeChartFile] = useState(null);
+  const [existingSizeChartUrl, setExistingSizeChartUrl] = useState(null);
   
   const [stock, setStock] = useState({
     P: 0, M: 0, G: 0, GG: 0, XG: 0, XGG: 0, XGGG: 0
@@ -78,6 +83,14 @@ export default function GestaoProdutos() {
     fetchProducts();
   }, []);
 
+  const categories = ["Geral", "Lançamentos", "Premier League", "La Liga", "Série A (Itália)", "Brasileirão", "Seleções", "Retrô", "Outras Ligas"];
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTab = activeTab === "Geral" || p.category === activeTab;
+    return matchesSearch && matchesTab;
+  });
+
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     
@@ -90,10 +103,14 @@ export default function GestaoProdutos() {
     setIsUploading(true);
     try {
       let finalImageUrl = existingImageUrl;
+      let finalSizeChartUrl = existingSizeChartUrl;
 
       // Se houver nova foto, comprime e usa a nova. Caso contrário, mantém a antiga.
       if (imageFile) {
         finalImageUrl = await compressImageToBase64(imageFile);
+      }
+      if (sizeChartFile) {
+        finalSizeChartUrl = await compressImageToBase64(sizeChartFile);
       }
 
       const productData = {
@@ -101,6 +118,7 @@ export default function GestaoProdutos() {
         price: parseFloat(price),
         category,
         imageUrl: finalImageUrl,
+        sizeChartUrl: finalSizeChartUrl || null,
         stock: {
             P: parseInt(stock.P) || 0,
             M: parseInt(stock.M) || 0,
@@ -136,7 +154,9 @@ export default function GestaoProdutos() {
     setCategory(product.category || "Lançamentos");
     setStock(product.stock);
     setExistingImageUrl(product.imageUrl);
+    setExistingSizeChartUrl(product.sizeChartUrl || null);
     setImageFile(null); // Reset file input
+    setSizeChartFile(null);
     setIsAdding(true);
   };
 
@@ -148,6 +168,8 @@ export default function GestaoProdutos() {
     setCategory("Lançamentos");
     setImageFile(null);
     setExistingImageUrl(null);
+    setSizeChartFile(null);
+    setExistingSizeChartUrl(null);
     setStock({ P: 0, M: 0, G: 0, GG: 0, XG: 0, XGG: 0, XGGG: 0 });
   };
 
@@ -209,20 +231,36 @@ export default function GestaoProdutos() {
                         </div>
 
                         {/* File Upload Area */}
-                        <div>
-                            <label className="text-sm font-bold text-slate-500 mb-2 block flex items-center gap-2"><Upload size={16}/> Foto do Produto {editingProduct && "(Deixe vazio para manter a atual)"}</label>
-                            {editingProduct && existingImageUrl && (
-                                <div className="mb-3 w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
-                                    <img src={existingImageUrl} className="w-full h-full object-cover" />
-                                </div>
-                            )}
-                            <input 
-                                required={!editingProduct} type="file" accept="image/*" 
-                                onChange={e => setImageFile(e.target.files[0])} 
-                                className="w-full border-2 border-dashed border-gray-200 p-6 rounded-xl text-center text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-[var(--color-kora-blue)] hover:file:bg-blue-100 transition-colors" 
-                            />
-                            <p className="text-xs text-slate-400 mt-2">A foto será magicamente encolhida pelo navegador e salva como texto puro para burlar a nuvem do Google.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-sm font-bold text-slate-500 mb-2 block flex items-center gap-2"><Upload size={16}/> Foto do Produto {editingProduct && "(Deixe vazio para manter)"}</label>
+                                {editingProduct && existingImageUrl && (
+                                    <div className="mb-3 w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
+                                        <img src={existingImageUrl} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <input 
+                                    required={!editingProduct} type="file" accept="image/*" 
+                                    onChange={e => setImageFile(e.target.files[0])} 
+                                    className="w-full border-2 border-dashed border-gray-200 p-6 rounded-xl text-center text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-[var(--color-kora-blue)] hover:file:bg-blue-100 transition-colors" 
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-bold text-slate-500 mb-2 block flex items-center gap-2"><Upload size={16}/> Tabela de Medidas {editingProduct && "(Opcional)"}</label>
+                                {editingProduct && existingSizeChartUrl && (
+                                    <div className="mb-3 w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
+                                        <img src={existingSizeChartUrl} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <input 
+                                    type="file" accept="image/*" 
+                                    onChange={e => setSizeChartFile(e.target.files[0])} 
+                                    className="w-full border-2 border-dashed border-gray-200 p-6 rounded-xl text-center text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 transition-colors" 
+                                />
+                            </div>
                         </div>
+                        <p className="text-xs text-slate-400 mt-2">Ambas as imagens são encolhidas pelo navegador (Base64) para economia extrema de nuvem.</p>
 
                         {/* Stock Management Area */}
                         <div>
@@ -252,14 +290,48 @@ export default function GestaoProdutos() {
                 </div>
             )}
 
+            {/* Filters & Search */}
+            {!isAdding && (
+               <div className="mb-6 space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 no-scrollbar">
+                          {categories.map(cat => (
+                              <button
+                                  key={cat}
+                                  onClick={() => setActiveTab(cat)}
+                                  className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${
+                                      activeTab === cat 
+                                      ? 'bg-[var(--color-kora-blue)] text-white border-[var(--color-kora-blue)] shadow-md shadow-blue-200' 
+                                      : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                                  }`}
+                              >
+                                  {cat}
+                              </button>
+                          ))}
+                      </div>
+
+                      <div className="relative w-full md:w-72">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                          <input 
+                              type="text" 
+                              placeholder="Buscar camisa..." 
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-[var(--color-kora-blue)] transition-all text-sm"
+                          />
+                      </div>
+                  </div>
+               </div>
+            )}
+
             {/* List */}
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                {loading ? (
                  <div className="p-8 text-center text-slate-500">Carregando catálogo...</div>
-               ) : products.length === 0 ? (
+               ) : filteredProducts.length === 0 ? (
                  <div className="p-12 text-center text-slate-500 flex flex-col items-center">
                     <Package size={48} className="text-slate-200 mb-4" />
-                    <p className="mb-4">Nenhuma camisa cadastrada até o momento.</p>
+                    <p className="mb-4">Nenhum produto encontrado nesta visualização.</p>
                  </div>
                ) : (
                  <>
@@ -275,7 +347,7 @@ export default function GestaoProdutos() {
                          </tr>
                        </thead>
                        <tbody>
-                         {products.map((p) => {
+                         {filteredProducts.map((p) => {
                            const hasStock = Object.values(p.stock).some(val => val > 0);
   
                            return (
@@ -323,7 +395,7 @@ export default function GestaoProdutos() {
                    
                    {/* Mobile Cards View */}
                    <div className="md:hidden flex flex-col p-4 gap-4 bg-slate-50">
-                      {products.map((p) => {
+                      {filteredProducts.map((p) => {
                          const hasStock = Object.values(p.stock).some(val => val > 0);
                          
                          return (

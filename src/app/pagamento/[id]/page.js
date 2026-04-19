@@ -30,38 +30,29 @@ export default function CheckoutExclusivo() {
     loadOrder();
   }, [id]);
 
-  const handleMockPayment = async () => {
+  const handlePayment = async () => {
     setProcessing(true);
     try {
-       // 1. Atualiza Status do Pedido
-       const orderRef = doc(db, "orders", id);
-       await updateDoc(orderRef, { status: "Pago" });
+        const response = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: id })
+        });
 
-       // 2. Decrementa Estoque (Lógica de Pronta Entrega vs Encomenda)
-       for (const item of order.items) {
-          const productRef = doc(db, "products", item.id);
-          const productSnap = await getDoc(productRef);
-          
-          if (productSnap.exists()) {
-             const stock = productSnap.data().stock || {};
-             const currentStockQty = stock[item.selectedSize] || 0;
-             
-             // Só decrementa se havia estoque (se for Pronta Entrega de verdade)
-             // Encomendas virtuais não precisam decrementar o que não existe.
-             if (currentStockQty > 0) {
-                 await updateDoc(productRef, {
-                    [`stock.${item.selectedSize}`]: increment(-item.quantity)
-                 });
-             }
-          }
-       }
+        const data = await response.json();
 
-       setSuccess(true);
+        if (data.init_point) {
+            // Redireciona para o Mercado Pago
+            window.location.href = data.init_point;
+        } else {
+            throw new Error(data.error || "Erro ao gerar link de pagamento");
+        }
     } catch (e) {
-       console.error(e);
-       alert("Erro ao validar pagamento");
+        console.error(e);
+        alert(e.message || "Erro ao conectar com Mercado Pago");
+    } finally {
+        setProcessing(false);
     }
-    setProcessing(false);
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-500">Criptografando ambiente...</div>;
@@ -118,15 +109,19 @@ export default function CheckoutExclusivo() {
 
               <div className="bg-slate-900 rounded-b-3xl p-6 shadow-xl relative overflow-hidden">
                  <div className="absolute top-0 right-0 p-4 opacity-10"><CreditCard size={100} /></div>
-                 <p className="text-slate-400 text-sm mb-4 text-center">Pagamento processado via Mercado Pago.</p>
+                 <p className="text-slate-400 text-sm mb-4 text-center">Pagamento oficial via Mercado Pago.</p>
                  <button 
                    disabled={processing}
-                   onClick={handleMockPayment}
-                   className="w-full bg-[var(--color-kora-blue)] text-white font-bold text-lg p-5 rounded-xl flex items-center justify-center gap-3 hover:bg-blue-800 transition disabled:opacity-50"
+                   onClick={handlePayment}
+                   className="w-full bg-[var(--color-kora-blue)] text-white font-bold text-lg p-5 rounded-xl flex items-center justify-center gap-3 hover:bg-blue-800 transition disabled:opacity-50 active:scale-95 shadow-lg shadow-blue-900/40"
                  >
                     {processing ? <Lock className="animate-spin" /> : <Lock />} 
-                    {processing ? "Processando..." : "Quitar R$ " + order.total.toFixed(2).replace('.',',')}
+                    {processing ? "Gerando Link Seguro..." : "Pagar Agora R$ " + order.total.toFixed(2).replace('.',',')}
                  </button>
+                 <div className="mt-4 flex items-center justify-center gap-4 grayscale opacity-50">
+                    <img src="https://logodownload.org/wp-content/uploads/2019/06/mercado-pago-logo-0.png" className="h-4" alt="Mercado Pago" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Logo_Pix.png/1200px-Logo_Pix.png" className="h-4" alt="Pix" />
+                 </div>
               </div>
 
           </div>

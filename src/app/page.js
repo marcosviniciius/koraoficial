@@ -1,12 +1,14 @@
 "use client";
 import Navbar from "@/components/Navbar";
-import { ArrowRight, Star, ShieldCheck, Zap, RotateCcw, ShoppingCart, Search, X } from "lucide-react";
+import { ArrowRight, Star, ShieldCheck, Zap, RotateCcw, ShoppingCart, Search, X, ChevronLeft, Ruler, Tag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function Home() {
+  const router = useRouter();
   const { addItem } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,39 @@ export default function Home() {
     fetchProducts();
   }, []);
 
+  // Auto-open product from URL
+  const searchParams = useSearchParams();
+  const pId = searchParams.get('p');
+
+  useEffect(() => {
+    if (pId && products.length > 0) {
+      const target = products.find(p => p.id === pId);
+      if (target) {
+        setSelectedProduct(target);
+      }
+    }
+  }, [pId, products]);
+
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  // Agrupar produtos por categoria
+  const groupedProducts = filteredProducts.reduce((acc, product) => {
+    const cat = product.category || "Outros";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(product);
+    return acc;
+  }, {});
+
+  const categoryOrder = ["Lançamentos", "Seleções", "Brasileirão", "Premier League", "La Liga", "Série A (Itália)", "Retrô", "Outras Ligas"];
+  
+  const renderedCategories = Object.keys(groupedProducts).sort((a,b) => {
+      const idxA = categoryOrder.indexOf(a);
+      const idxB = categoryOrder.indexOf(b);
+      if(idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if(idxA !== -1) return -1;
+      if(idxB !== -1) return 1;
+      return a.localeCompare(b);
+  });
 
   const handleAddToCart = () => {
     if(!selectedProduct || !selectedSize) return;
@@ -50,83 +84,196 @@ export default function Home() {
     setSelectedSize("");
   };
 
-  return (
-    <>
-      <Navbar />
-      <main className="flex flex-col min-h-screen bg-slate-50">
-        
-        {/* Modal Tabela de Tamanho e Compra */}
-        {selectedProduct && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center md:p-4 bg-white md:bg-transparent">
-             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm hidden md:block" onClick={() => setSelectedProduct(null)}/>
-             <div className="relative bg-white w-full h-full md:h-auto md:max-w-2xl md:rounded-3xl overflow-y-auto md:overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom-full md:zoom-in-95 duration-200">
-                <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 bg-white/80 backdrop-blur-md p-3 rounded-full hover:bg-white text-slate-800 transition z-10 shadow-sm border border-slate-100">
-                   <X size={20}/>
-                </button>
-                
-                {/* Modal Image */}
-                <div className="w-full md:w-1/2 bg-slate-100 flex items-center justify-center h-[350px] md:h-auto relative shrink-0">
-                    {selectedProduct.imageUrl ? (
-                        <img src={selectedProduct.imageUrl} className="w-full h-full object-cover" alt={selectedProduct.name} />
-                    ) : (
-                        <span className="font-logo text-slate-300 text-3xl">KORA</span>
-                    )}
-                </div>
+  if (selectedProduct) {
+     const similarProducts = products.filter(p => p.category === selectedProduct.category && p.id !== selectedProduct.id).slice(0, 4);
+     const stockForSize = selectedSize ? selectedProduct.stock[selectedSize] : 0;
+     const isImmediate = stockForSize > 0;
 
-                {/* Modal Details */}
-                <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col bg-white">
-                   <p className="text-xs font-bold text-[var(--color-kora-blue)] uppercase tracking-wider mb-2">{selectedProduct.category}</p>
-                   <h2 className="text-2xl md:text-2xl font-bold text-slate-800 mb-2 leading-tight">{selectedProduct.name}</h2>
-                   <p className="text-3xl font-black text-[var(--color-kora-green-dark)] mb-6">R$ {selectedProduct.price.toFixed(2).replace('.', ',')}</p>
+     return (
+        <div className="min-h-screen bg-slate-50 pb-20 font-sans animate-in fade-in duration-300">
+           
+           {/* Product Header */}
+           <div className="sticky top-0 z-50 bg-white border-b border-slate-200 p-4 shadow-sm flex items-center gap-4">
+               <button onClick={() => { setSelectedProduct(null); setSelectedSize(""); }} className="bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition text-slate-800">
+                   <ChevronLeft size={20} />
+               </button>
+               <h2 className="font-bold text-slate-800 text-lg truncate flex-1">{selectedProduct.name}</h2>
+           </div>
 
-                   <div className="mb-8 flex-1">
-                      <p className="text-sm font-bold text-slate-600 mb-3 block">Escolha o Tamanho:</p>
-                      <div className="flex flex-wrap gap-2 md:gap-3">
-                          {['P', 'M', 'G', 'GG', 'XG', 'XGG', 'XGGG'].map(size => {
-                              const stock = selectedProduct.stock[size];
-                              const isSelected = selectedSize === size;
-                              return (
-                                <button 
-                                  key={size}
-                                  onClick={() => setSelectedSize(size)}
-                                  className={`relative px-4 md:px-4 py-3 rounded-xl border-2 font-black transition-all ${
-                                      isSelected 
-                                      ? 'border-[var(--color-kora-green)] bg-green-50 text-[var(--color-kora-green-dark)]' 
-                                      : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                                  }`}
-                                >
-                                  {size}
-                                  {stock === 0 && (
-                                     <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 border-2 border-white px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider">Demanda</span>
-                                  )}
-                                </button>
-                              )
-                          })}
-                      </div>
+           <div className="max-w-5xl mx-auto px-4 py-8">
+               
+               <div className="flex flex-col md:flex-row gap-6 lg:gap-8 bg-white p-4 md:p-6 rounded-lg shadow-sm mb-12 border border-slate-200">
+                   
+                   {/* Coluna Esquerda: Imagem + Detalhes (Desktop) */}
+                   <div className="w-full md:w-[65%] flex flex-col order-1 md:order-1">
+                       <div className="bg-white rounded-lg flex items-center justify-center p-0 md:p-4">
+                          {selectedProduct.imageUrl ? (
+                              <img src={selectedProduct.imageUrl} className="max-w-full h-auto max-h-[500px] object-contain" alt={selectedProduct.name} />
+                          ) : (
+                              <div className="w-full h-[400px] flex items-center justify-center font-logo text-slate-300 text-6xl">KORA</div>
+                          )}
+                       </div>
+
+                       {/* Descrição Desktop */}
+                       <div className="hidden md:block mt-8 border-t border-slate-200 pt-8 pb-4 px-4">
+                           <h3 className="text-xl font-bold text-slate-800 mb-6">O que você precisa saber sobre este produto</h3>
+                           <ul className="list-disc pl-5 space-y-3 text-sm text-slate-600">
+                               <li>Camisa importada padrão 1:1 Tailandesa Premium.</li>
+                               <li>Escudos das confederações e do time bordados em alta definição.</li>
+                               <li>Tecido confortável com tecnologia de respirabilidade térmica.</li>
+                               <li>Garantia contra defeito de fabricação.</li>
+                               <li>Acompanha tags e embalagem plástica padronizada.</li>
+                           </ul>
+                       </div>
+
+                       {/* Foto da Tabela Desktop */}
+                       {selectedProduct.sizeChartUrl && (
+                          <div className="hidden md:block mt-4 px-4 pb-8">
+                             <h3 className="text-xl font-bold text-slate-800 mb-6">Guia de Tamanhos</h3>
+                             <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full max-w-xl rounded-lg border border-slate-200 shadow-sm" />
+                          </div>
+                       )}
                    </div>
 
-                   {/* Dynamic Button based on size selection */}
-                   {selectedSize ? (
-                      selectedProduct.stock[selectedSize] > 0 ? (
-                         <button onClick={handleAddToCart} className="w-full bg-[var(--color-kora-green)] hover:bg-[var(--color-kora-green-dark)] text-white font-bold py-4 md:py-4 rounded-2xl text-lg flex justify-center items-center gap-2 transform transition-all shadow-lg active:scale-95 mb-4 md:mb-0">
-                            <ShoppingCart size={20} /> Comprar Agora
-                         </button>
-                      ) : (
-                         <button onClick={handleAddToCart} className="w-full bg-slate-800 hover:bg-slate-900 text-yellow-400 font-bold py-4 rounded-2xl flex flex-col justify-center items-center transition-all shadow-lg border border-yellow-500/20 active:scale-95 mb-4 md:mb-0">
-                            <span className="text-lg flex items-center gap-2"><ShoppingCart size={20}/> Reservar Encomenda</span>
-                            <span className="text-[10px] uppercase tracking-widest opacity-80 font-bold mt-1">Prazo de 25 a 30 dias úteis</span>
-                         </button>
-                      )
-                   ) : (
-                      <button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-4 rounded-2xl text-lg flex justify-center items-center gap-2 cursor-not-allowed mb-4 md:mb-0">
-                         Selecione o Tamanho
-                      </button>
-                   )}
+                   {/* Coluna Direita: Buybox + Detalhes (Mobile) */}
+                   <div className="w-full md:w-[35%] flex flex-col order-2 md:order-2">
+                       <div className="border border-slate-200 rounded-[8px] p-6 lg:sticky lg:top-24">
+                           <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4 leading-tight">{selectedProduct.name}</h1>
 
-                </div>
-             </div>
-          </div>
-        )}
+                           <div className="mb-6">
+                               <div className="flex items-end gap-2">
+                                   <p className="text-4xl font-black text-slate-800 leading-none">
+                                       <span className="text-xl relative top-[-6px] pr-1">R$</span>
+                                       {selectedProduct.price.toFixed(2).replace('.', ',')}
+                                   </p>
+                               </div>
+                               <p className="text-sm text-slate-500 mt-2 font-bold">em até 12x no cartão de crédito</p>
+                           </div>
+
+                           {/* Seleção de Tamanhos e Tabela */}
+                           <div className="mb-6 pt-6 border-t border-slate-200">
+                              <div className="flex justify-between items-center mb-3">
+                                  <p className="text-base font-bold text-slate-800">Tamanho:</p>
+                              </div>
+                              
+                              <div className="flex flex-wrap gap-2">
+                                  {['P', 'M', 'G', 'GG', 'XG', 'XGG', 'XGGG'].map(size => {
+                                      const stock = selectedProduct.stock[size];
+                                      const isSelected = selectedSize === size;
+                                      return (
+                                        <button 
+                                          key={size}
+                                          onClick={() => setSelectedSize(size)}
+                                          className={`relative px-4 py-2 rounded-md border text-sm font-bold transition-all min-w-[2.5rem] ${
+                                              isSelected 
+                                              ? 'border-[#3483fa] bg-blue-50 text-[#3483fa]' 
+                                              : 'border-slate-300 text-slate-800 hover:border-slate-400 bg-white'
+                                          }`}
+                                        >
+                                          {size}
+                                        </button>
+                                      )
+                                  })}
+                              </div>
+                              {selectedSize && (
+                                  <p className="text-sm mt-4 font-normal">
+                                      {isImmediate ? (
+                                         <span className="text-slate-800 font-bold text-xs"><Zap className="inline text-[#00a650] fill-[#00a650] relative top-[-1px]" size={14}/> Pronta Entrega</span>
+                                      ) : (
+                                         <span className="text-amber-700 font-bold border border-amber-500 bg-amber-50 px-2 py-1 rounded text-xs inline-block mt-2">Disponibilidade: 25 a 30 dias</span>
+                                      )}
+                                  </p>
+                              )}
+                           </div>
+
+                           {/* Botão de Compra Estilo ML */}
+                           <div className="mt-4 flex flex-col gap-2">
+                                <button 
+                                   onClick={handleAddToCart}
+                                   disabled={!selectedSize}
+                                   className={`w-full py-4 rounded-xl text-lg font-bold transition-all ${
+                                       selectedSize 
+                                       ? 'bg-[#3483fa] hover:bg-[#2968c8] text-white shadow-lg shadow-blue-500/30' 
+                                       : 'bg-[#rgba(65,137,230,.15)] bg-blue-100 text-blue-300 cursor-not-allowed'
+                                   }`}
+                                >
+                                   Comprar agora
+                                </button>
+                                
+                                <button 
+                                   onClick={handleAddToCart}
+                                   disabled={!selectedSize}
+                                   className={`w-full py-4 rounded-xl text-lg font-bold transition-all ${
+                                       selectedSize 
+                                       ? 'bg-blue-50 hover:bg-blue-100 text-[#3483fa]' 
+                                       : 'hidden'
+                                   }`}
+                                >
+                                   Adicionar ao carrinho
+                                </button>
+                                
+                                <div className="mt-4 text-xs font-bold text-slate-500 flex items-center justify-center gap-1">
+                                   <ShieldCheck size={14} className="text-[#3483fa]"/> Compra Garantida Kora Vendas
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Descrição Mobile e Tabela de Medidas (renderizado após a caixa de compra apenas no celular) */}
+                        <div className="md:hidden mt-10 border-t border-slate-200 pt-8 pb-4">
+                            <h3 className="text-xl font-bold text-slate-800 mb-6">O que você precisa saber sobre este produto</h3>
+                            <ul className="list-disc pl-5 space-y-3 text-sm text-slate-600">
+                                <li>Camisa importada padrão 1:1 Tailandesa Premium.</li>
+                                <li>Escudos das confederações e do time bordados em alta definição.</li>
+                                <li>Tecido confortável com tecnologia de respirabilidade térmica.</li>
+                                <li>Garantia contra defeito de fabricação.</li>
+                                <li>Acompanha tags e embalagem plástica padronizada.</li>
+                            </ul>
+                        </div>
+
+                        {/* Foto da Tabela Mobile */}
+                        {selectedProduct.sizeChartUrl && (
+                           <div className="md:hidden mt-6 pb-4 border-t border-slate-100 pt-6">
+                              <h3 className="text-xl font-bold text-slate-800 mb-6">Guia de Tamanhos</h3>
+                              <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full rounded-lg border border-slate-200 shadow-sm" />
+                           </div>
+                        )}
+                   </div>
+               </div>
+
+               {/* Recomendados / Semelhantes (Fim da Página) */}
+               {similarProducts.length > 0 && (
+                   <div className="mt-16 border-t border-slate-200 pt-12">
+                       <h3 className="text-2xl font-bold text-slate-800 mb-8 border-l-4 border-[#3483fa] pl-4">Quem viu este produto também comprou</h3>
+                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                          {similarProducts.map((p) => (
+                            <div key={p.id} onClick={() => { setSelectedProduct(null); setTimeout(() => setSelectedProduct(p), 50); window.scrollTo(0, 0); }} className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
+                                <div className="relative w-full pt-[100%] bg-slate-100">
+                                   {p.imageUrl ? (
+                                      <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                   ) : (
+                                      <div className="absolute inset-0 flex items-center justify-center font-logo text-slate-300 text-2xl">KORA</div>
+                                   )}
+                                </div>
+                                <div className="p-4 border-t border-slate-50">
+                                   <h4 className="font-bold text-slate-700 text-sm mb-2 leading-tight group-hover:text-[#3483fa] transition-colors">{p.name}</h4>
+                                   <p className="font-light text-slate-800 text-xl">R$ {p.price.toFixed(2).replace('.', ',')}</p>
+                                </div>
+                            </div>
+                          ))}
+                       </div>
+                   </div>
+               )}
+           </div>
+        </div>
+     );
+  }
+
+  return (
+    <>
+      <Navbar searchTerm={searchTerm} onSearch={setSearchTerm} />
+      <main className="flex flex-col min-h-screen bg-slate-50 pt-20">
+        
+
 
         {/* Hero Section */}
         <section className="relative w-full bg-white overflow-hidden py-16 md:py-24">
@@ -192,21 +339,8 @@ export default function Home() {
         </section>
 
         {/* Dynamic Bestsellers (Products Feed) */}
-        <section id="vitrine" className="py-20 flex-1">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
-              <h2 className="font-logo text-4xl text-[var(--color-kora-blue)] border-b-4 border-[var(--color-kora-yellow)] inline-block pb-2">O QUE TEMOS HOJE</h2>
-              
-              <div className="relative w-full md:w-72">
-                  <input 
-                      type="text" 
-                      placeholder="Buscar por time..."
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-white border border-gray-200 text-slate-800 rounded-full py-3 px-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[var(--color-kora-green)]" 
-                  />
-                  <Search className="absolute right-4 top-3 text-gray-400" size={20}/>
-              </div>
-            </div>
+        <section id="vitrine" className="py-12 md:py-20 flex-1">
+          <div className="max-w-7xl mx-auto px-0 md:px-4 sm:px-6 lg:px-8">
 
             {loading ? (
                 <div className="text-center py-20">
@@ -218,35 +352,74 @@ export default function Home() {
                     <p className="text-slate-500 font-bold mb-2">Nenhuma camisa encontrada.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                  {filteredProducts.map((p) => (
-                    <div key={p.id} onClick={() => setSelectedProduct(p)} className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] border border-slate-100 transition-all hover:shadow-[0_20px_40px_-15px_rgba(0,191,99,0.15)] flex flex-col h-full hover:-translate-y-1">
-                      
-                      {/* Image Frame */}
-                      <div className="relative w-full pt-[100%] bg-slate-100 overflow-hidden">
-                        {p.imageUrl ? (
-                           <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                        ) : (
-                           <div className="absolute inset-0 flex items-center justify-center font-logo text-slate-300 text-2xl">KORA</div>
-                        )}
-                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-[var(--color-kora-blue)] shadow-sm">
-                          {p.category}
-                        </div>
-                      </div>
-                      
-                      {/* Card Info */}
-                      <div className="p-6 flex flex-col flex-1">
-                        <h3 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-[var(--color-kora-green)] transition-colors">{p.name}</h3>
-                        <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100">
-                          <span className="font-bold text-2xl text-[var(--color-kora-green-dark)]">R$ {p.price.toFixed(2).replace('.', ',')}</span>
-                          <div className="bg-slate-100 text-slate-400 p-2 rounded-lg group-hover:bg-[var(--color-kora-green)] group-hover:text-white transition-colors">
-                              <ShoppingCart size={20} />
-                          </div>
-                        </div>
-                      </div>
+                <div className="flex flex-col gap-12 md:gap-20">
+                  {renderedCategories.map(category => {
+                    const categoryProducts = groupedProducts[category];
+                    // Duplica os itens no mobile para simular "scroll infinito" se não estiver selecionado
+                    const mobileProducts = [...categoryProducts, ...categoryProducts, ...categoryProducts];
+                    
+                    return (
+                    <div key={category} className="animate-in fade-in slide-in-from-bottom-8 duration-500">
+                       <div className="mb-6 md:mb-10 text-center md:text-left px-4 md:px-0">
+                           <h3 
+                             onClick={() => router.push(`/categoria/${encodeURIComponent(category)}`)}
+                             className="font-logo text-2xl md:text-3xl lg:text-4xl text-[var(--color-kora-blue)] border-b-4 border-[var(--color-kora-yellow)] inline-block pb-2 uppercase uppercase-shadow cursor-pointer hover:opacity-80 transition-opacity"
+                           >
+                               {category}
+                           </h3>
+                       </div>
+                       
+                       {/* Mobile Carousel (Falso Infinito) */}
+                       <div className="flex md:hidden overflow-x-auto snap-x snap-mandatory show-scrollbars-modern gap-4 pb-8 pt-2 px-4 w-full">
+                           {mobileProducts.map((p, idx) => (
+                             <div key={`${p.id}-${idx}`} onClick={() => setSelectedProduct(p)} className="snap-center shrink-0 w-[260px] sm:w-[280px] group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-[0_8px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 transition-all hover:shadow-[0_20px_40px_-15px_rgba(0,191,99,0.15)] flex flex-col hover:-translate-y-1">
+                               {/* Image Frame */}
+                               <div className="relative w-full pt-[100%] bg-slate-100 overflow-hidden">
+                                 {p.imageUrl ? (
+                                    <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                 ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center font-logo text-slate-300 text-2xl">KORA</div>
+                                 )}
+                               </div>
+                               {/* Card Info */}
+                               <div className="p-6 flex flex-col flex-1">
+                                 <h3 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-[var(--color-kora-green)] transition-colors">{p.name}</h3>
+                                 <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100">
+                                   <span className="font-bold text-2xl text-[var(--color-kora-green-dark)]">R$ {p.price.toFixed(2).replace('.', ',')}</span>
+                                   <div className="bg-slate-100 text-slate-400 p-2 rounded-lg group-hover:bg-[var(--color-kora-green)] group-hover:text-white transition-colors">
+                                       <ShoppingCart size={20} />
+                                   </div>
+                                 </div>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
 
+                       {/* Desktop Grid / Mobile Selected Grid */}
+                       <div className="hidden md:grid lg:grid-cols-4 md:gap-8 md:px-0 w-full">
+                         {categoryProducts.map((p) => (
+                           <div key={p.id} onClick={() => setSelectedProduct(p)} className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-[0_8px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 transition-all hover:shadow-[0_20px_40px_-15px_rgba(0,191,99,0.15)] flex flex-col hover:-translate-y-1">
+                             <div className="relative w-full pt-[100%] bg-slate-100 overflow-hidden">
+                               {p.imageUrl ? (
+                                  <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                               ) : (
+                                  <div className="absolute inset-0 flex items-center justify-center font-logo text-slate-300 text-2xl">KORA</div>
+                               )}
+                             </div>
+                             <div className="p-6 flex flex-col flex-1">
+                               <h3 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-[var(--color-kora-green)] transition-colors">{p.name}</h3>
+                               <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100">
+                                 <span className="font-bold text-2xl text-[var(--color-kora-green-dark)]">R$ {p.price.toFixed(2).replace('.', ',')}</span>
+                                 <div className="bg-slate-100 text-slate-400 p-2 rounded-lg group-hover:bg-[var(--color-kora-green)] group-hover:text-white transition-colors">
+                                     <ShoppingCart size={20} />
+                                 </div>
+                               </div>
+                             </div>
+                           </div>
+                         ))}
+                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
             )}
           </div>

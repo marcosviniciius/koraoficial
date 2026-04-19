@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { collection, getDocs, addDoc, query, orderBy, where, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, query, orderBy, where, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AdminSidebar from "@/components/AdminSidebar";
-import { Briefcase, Copy, Users, Plus, Target, CheckCircle2, Pencil, Fingerprint, LineChart, X, MapPin } from "lucide-react";
+import { Briefcase, Copy, Users, Plus, Target, CheckCircle2, Pencil, Fingerprint, LineChart, X, MapPin, Trash2, MessageCircle } from "lucide-react";
 
 export default function AfiliadosPage() {
   const [affiliates, setAffiliates] = useState([]);
@@ -93,6 +93,19 @@ export default function AfiliadosPage() {
     setNewPassword("");
   };
 
+  const handleDeleteAffiliate = async (aff) => {
+    if(!window.confirm(`TEM CERTEZA? Isso excluirá o acesso de ${aff.name} permanentemente. Os pedidos feitos por ele continuarão no sistema, mas ele perderá o acesso ao painel dele.`)) return;
+    
+    try {
+      await deleteDoc(doc(db, "affiliates", aff.id));
+      alert("Afiliado removido com sucesso!");
+      fetchData();
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao remover afiliado.");
+    }
+  };
+
   const calculateOwedCommission = (affiliateId) => {
     // A commissions is owed if order is Paid ("Pago"). 
     // If it's Aguardando Pagamento, it's not owed yet.
@@ -107,17 +120,17 @@ export default function AfiliadosPage() {
       .reduce((sum, o) => sum + (o.total || 0), 0);
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, message = "Copiado com sucesso!") => {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text);
-        alert("Link copiado! Mande no WhatsApp do revendedor.");
+        alert(message);
       } else {
         throw new Error("Clipboard API not available");
       }
     } catch (err) {
       console.warn("Falha ao copiar automaticamente:", err);
-      alert("Seu navegador bloqueou a cópia automática por segurança (precisa de HTTPS). Por favor, copie o link manualmente no campo logo acima.");
+      alert("Seu navegador bloqueou a cópia automática por segurança (precisa de HTTPS). Por favor, copie o texto manualmente no campo.");
     }
   };
 
@@ -191,16 +204,34 @@ export default function AfiliadosPage() {
                                        <Fingerprint size={10} />
                                        <span className="text-[10px] font-mono font-bold tracking-tight uppercase">ID: {aff.id.slice(0, 8)}</span>
                                     </div>
-                                    <p className="text-xs text-slate-400 mt-1 font-medium">WhatsApp: {aff.phone}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <p className="text-xs text-slate-400 font-medium">WhatsApp: {aff.phone}</p>
+                                      <a 
+                                        href={`https://wa.me/55${aff.phone.replace(/\D/g, '')}`} 
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="text-emerald-500 hover:text-emerald-600 transition"
+                                      >
+                                        <MessageCircle size={14} />
+                                      </a>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
                               <td className="p-4">
-                                {calculateOwedCommission(aff.id) > 0 ? (
-                                   <p className="bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg font-mono text-xs inline-block text-slate-600">{aff.pix}</p>
-                                ) : (
-                                   <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Bloqueada (R$ 0)</p>
-                                )}
+                                 {aff.pix ? (
+                                   <div className="flex items-center gap-2 group">
+                                      <p className="bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg font-mono text-xs inline-block text-slate-600 truncate max-w-[120px]">{aff.pix}</p>
+                                      <button 
+                                        onClick={() => copyToClipboard(aff.pix, "Chave PIX copiada!")}
+                                        className="text-slate-400 hover:text-purple-600 transition"
+                                        title="Copiar Chave PIX"
+                                      >
+                                        <Copy size={14} />
+                                      </button>
+                                   </div>
+                                 ) : (
+                                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Não Cadastrada</p>
+                                 )}
                               </td>
                               <td className="p-4">
                                  <p className="text-lg font-black text-emerald-600">R$ {calculateOwedCommission(aff.id).toFixed(2).replace('.', ',')}</p>
@@ -218,7 +249,7 @@ export default function AfiliadosPage() {
                                        <LineChart size={16} />
                                      </button>
                                      <button 
-                                       onClick={() => copyToClipboard(link)}
+                                       onClick={() => copyToClipboard(link, "Link de Venda copiado! Mande no WhatsApp do revendedor.")}
                                        className="bg-[var(--color-kora-blue)] text-white hover:bg-[var(--color-kora-blue-dark)] transition p-2 rounded-lg shadow-sm"
                                        title="Copiar Link de Venda"
                                      >
@@ -230,6 +261,13 @@ export default function AfiliadosPage() {
                                        title="Editar Dados"
                                      >
                                        <Pencil size={16} />
+                                     </button>
+                                     <button 
+                                       onClick={() => handleDeleteAffiliate(aff)}
+                                       className="bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 transition p-2 rounded-lg shadow-sm"
+                                       title="Remover Afiliado"
+                                     >
+                                       <Trash2 size={16} />
                                      </button>
                                   </div>
                               </td>
@@ -257,11 +295,22 @@ export default function AfiliadosPage() {
                                      <p className="text-xs text-slate-500 mt-1">{aff.phone}</p>
                                   </div>
                                   <div className="flex gap-2">
+                                      <a 
+                                           href={`https://wa.me/55${aff.phone.replace(/\D/g, '')}`} 
+                                           target="_blank" rel="noopener noreferrer"
+                                           className="bg-emerald-50 p-2 rounded-lg border border-emerald-100 text-emerald-500"
+                                           title="WhatsApp do Revendedor"
+                                       >
+                                           <MessageCircle size={18} />
+                                       </a>
                                       <button onClick={() => setSelectedDashboardAffiliate(aff)} className="bg-indigo-50 p-2 rounded-lg border border-indigo-100 text-indigo-500">
                                           <LineChart size={18} />
                                       </button>
                                       <button onClick={() => openEdit(aff)} className="bg-slate-50 p-2 rounded-lg border border-slate-100 text-slate-400">
                                           <Pencil size={18} />
+                                      </button>
+                                      <button onClick={() => handleDeleteAffiliate(aff)} className="bg-red-50 p-2 rounded-lg border border-red-100 text-red-500">
+                                          <Trash2 size={18} />
                                       </button>
                                   </div>
                                </div>
@@ -275,16 +324,31 @@ export default function AfiliadosPage() {
                                      <p className="font-black text-lg text-amber-700 mt-0.5">R$ {pending.toFixed(2).replace('.', ',')}</p>
                                   </div>
                                </div>
-                               <div className="flex flex-col gap-2 mt-3">
+                               <div className="flex flex-col gap-3 mt-3">
+                                  {aff.pix && (
+                                     <div className="bg-purple-50 border border-purple-100 p-4 rounded-2xl">
+                                        <p className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><Fingerprint size={10}/> Chave PIX do Revendedor:</p>
+                                        <div className="flex items-center justify-between gap-3">
+                                           <p className="text-xs font-mono font-bold text-slate-700 truncate">{aff.pix}</p>
+                                           <button 
+                                              onClick={() => copyToClipboard(aff.pix, "Chave PIX copiada!")}
+                                              className="bg-white text-purple-600 border border-purple-200 p-2 rounded-lg shadow-sm active:scale-95 transition"
+                                           >
+                                              <Copy size={14} />
+                                           </button>
+                                        </div>
+                                     </div>
+                                  )}
+
                                   <div className="bg-slate-50 border border-slate-200 p-2 rounded-lg overflow-hidden">
                                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Link de Venda (Copie abaixo):</p>
                                      <p className="text-[10px] font-mono text-slate-600 truncate">{link}</p>
                                   </div>
                                   <button 
-                                    onClick={() => copyToClipboard(link)}
+                                    onClick={() => copyToClipboard(link, "Link de Venda copiado! Mande no WhatsApp do revendedor.")}
                                     className="w-full bg-purple-600 text-white font-bold p-3.5 rounded-xl flex justify-center items-center gap-2 shadow-md shadow-purple-100 transition-transform active:scale-95"
                                   >
-                                     <Copy size={18} /> Tentar Copiar
+                                     <Copy size={18} /> Tentar Copiar Link
                                   </button>
                                </div>
                             </div>

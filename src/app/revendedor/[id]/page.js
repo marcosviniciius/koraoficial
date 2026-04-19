@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { collection, getDocs, doc, getDoc, addDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, setDoc, serverTimestamp, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, TrendingUp, ShieldCheck, Tag, ShoppingBag, ArrowRight } from "lucide-react";
+import { ChevronLeft, TrendingUp, ShieldCheck, Tag, ShoppingBag, ArrowRight, X, Users, Briefcase, Lock, Star, RotateCcw, Ruler, ShoppingCart, Zap } from "lucide-react";
 
 export default function AppRevendedor() {
   const { id } = useParams();
@@ -13,6 +13,16 @@ export default function AppRevendedor() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("Todas");
+
+  // Dashboard States
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [isLogged, setIsLogged] = useState(false);
+  const [affiliateOrders, setAffiliateOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+
 
   // Full Page Workflow
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -31,6 +41,11 @@ export default function AppRevendedor() {
   const [customerCity, setCustomerCity] = useState("");
   const [customerState, setCustomerState] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Security Gate
+  const [isBillingUnlocked, setIsBillingUnlocked] = useState(false);
+  const [billingPin, setBillingPin] = useState("");
+  const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
 
   useEffect(() => {
     async function loadApp() {
@@ -61,11 +76,38 @@ export default function AppRevendedor() {
       window.scrollTo(0,0);
       setSelectedSize("");
       setSellingPrice("150");
+      setIsBillingUnlocked(false);
+      setBillingPin("");
   };
 
   const handleBackToCatalog = () => {
       setSelectedProduct(null);
       window.scrollTo(0,0);
+  };
+
+  const handleCpfChange = async (e) => {
+    let typedCpf = e.target.value.replace(/\D/g, '');
+    setCustomerCpf(typedCpf);
+    
+    if (typedCpf.length === 11) {
+      try {
+        const clientDoc = await getDoc(doc(db, "clients", typedCpf));
+        if (clientDoc.exists()) {
+           const data = clientDoc.data();
+           if(data.name) setCustomerName(data.name);
+           if(data.phone) setCustomerPhone(data.phone);
+           if(data.cep) setCustomerCep(data.cep);
+           if(data.address) setCustomerAddress(data.address);
+           if(data.number) setCustomerNumber(data.number);
+           if(data.complement) setCustomerComplement(data.complement);
+           if(data.neighborhood) setCustomerNeighborhood(data.neighborhood);
+           if(data.city) setCustomerCity(data.city);
+           if(data.state) setCustomerState(data.state);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CPF", error);
+      }
+    }
   };
 
   const handleCreateSale = async (e) => {
@@ -104,6 +146,17 @@ export default function AppRevendedor() {
        };
 
        const docRef = await addDoc(collection(db, "orders"), orderData);
+
+       // Salvar/Atualizar dados do cliente na base central
+       const cleanCpf = customerCpf.replace(/\D/g, '');
+       if (cleanCpf.length === 11) {
+           await setDoc(doc(db, "clients", cleanCpf), {
+               ...orderData.client,
+               cpf: cleanCpf,
+               lastPurchase: serverTimestamp()
+           }, { merge: true });
+       }
+
        alert("Pedido faturado com sucesso! Redirecionando para a fatura do cliente...");
        router.push(`/pagamento/${docRef.id}`);
        setIsSubmitting(false);
@@ -114,6 +167,35 @@ export default function AppRevendedor() {
     }
   };
 
+  const handleUnlockBilling = (e) => {
+     e.preventDefault();
+     if (billingPin === affiliate.password) {
+         setIsBillingUnlocked(true);
+         setTimeout(() => {
+             document.getElementById('affiliate-checkout-form')?.scrollIntoView({ behavior: 'smooth' });
+         }, 100);
+     } else {
+         alert("PIN de Revendedor incorreto. Verifique no seu painel gerencial.");
+     }
+  };
+
+  const handleDashboardLogin = async (e) => {
+     e.preventDefault();
+     if(loginEmail === affiliate.email && loginPassword === affiliate.password) {
+         setIsLogged(true);
+         setShowLogin(false);
+         setLoadingOrders(true);
+         try {
+             const q = query(collection(db, "orders"), where("affiliateId", "==", affiliate.id));
+             const snap = await getDocs(q);
+             setAffiliateOrders(snap.docs.map(d => ({id: d.id, ...d.data()})));
+         } catch(error) { console.error(error); }
+         setLoadingOrders(false);
+     } else {
+         alert("E-mail ou senha incorretos.");
+     }
+  };
+
   // -------------------------------------------------------------
   // LOADING / INVALID STATE
   // -------------------------------------------------------------
@@ -122,163 +204,295 @@ export default function AppRevendedor() {
 
   // -------------------------------------------------------------
   // VIEW: FULL PAGE PRODUCT DETAILS
-  // -------------------------------------------------------------
   if (selectedProduct) {
+      const similarProducts = products.filter(p => p.category === selectedProduct.category && p.id !== selectedProduct.id).slice(0, 4);
       return (
-          <div className="min-h-screen bg-white pb-20 font-sans animate-in fade-in slide-in-from-right-8 duration-300">
+          <div className="min-h-screen bg-slate-50 pb-20 font-sans animate-in fade-in duration-300">
              
-             {/* Product Navbar */}
-             <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-slate-100 p-4 shadow-sm flex items-center gap-4">
+             {/* Product Header */}
+             <div className="sticky top-0 z-50 bg-white border-b border-slate-200 p-4 shadow-sm flex items-center gap-4">
                  <button onClick={handleBackToCatalog} className="bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition text-slate-800">
                      <ChevronLeft size={20} />
                  </button>
                  <h2 className="font-bold text-slate-800 text-lg truncate flex-1">{selectedProduct.name}</h2>
              </div>
 
-             <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12">
+             <div className="max-w-5xl mx-auto px-4 py-8">
                  
-                 {/* Product Main Presentation */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 mb-12">
-                     <div className="bg-slate-100 rounded-3xl overflow-hidden shadow-sm aspect-square relative">
-                        {selectedProduct.imageUrl ? (
-                            <img src={selectedProduct.imageUrl} className="w-full h-full object-cover" alt="Galeria"/>
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center font-logo text-slate-300 text-6xl">KORA</div>
-                        )}
-                        <span className="absolute top-4 left-4 bg-white px-3 py-1 text-xs font-bold rounded-lg shadow-sm">
-                            SKU: {selectedProduct.id.slice(0, 5).toUpperCase()}
-                        </span>
-                     </div>
+                 <div className="flex flex-col md:flex-row gap-6 lg:gap-8 bg-white p-4 md:p-6 rounded-lg shadow-sm mb-12 border border-slate-200">
                      
-                     <div className="flex flex-col justify-center">
-                         <div className="flex items-center gap-2 mb-4 bg-purple-50 text-purple-700 font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-lg w-fit">
-                             <Tag size={14}/> Qualidade Thai Premium
+                     {/* Coluna Esquerda: Imagem + Detalhes (Desktop) */}
+                     <div className="w-full md:w-[65%] flex flex-col order-1 md:order-1">
+                         <div className="bg-white rounded-lg flex items-center justify-center p-0 md:p-4">
+                            {selectedProduct.imageUrl ? (
+                                <img src={selectedProduct.imageUrl} className="max-w-full h-auto max-h-[500px] object-contain" alt={selectedProduct.name} />
+                            ) : (
+                                <div className="w-full h-[400px] flex items-center justify-center font-logo text-slate-300 text-6xl">KORA</div>
+                            )}
                          </div>
-                         <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-[1.1]">
-                             {selectedProduct.name}
-                         </h1>
-                         <p className="text-slate-600 md:text-lg mb-8 leading-relaxed">
-                             Tecido de alta performance esportiva (DryFit Ultra). Escudo e patrocínios perfeitamente alinhados na mesma tecnologia usada pelos clubes nas temporadas originais. Costura reforçada com respirabilidade.
-                         </p>
 
-                         <div className="space-y-4">
-                             <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                 <ShieldCheck className="text-emerald-500" size={28}/>
-                                 <div>
-                                     <p className="text-sm font-bold text-slate-800">Garantia Kora B2B</p>
-                                     <p className="text-xs text-slate-500 mt-1">Sua venda garantida com envio invisível (Dropshipping). Seu cliente recebe intacto.</p>
-                                 </div>
+                         {/* Descrição Desktop */}
+                         <div className="hidden md:block mt-8 border-t border-slate-200 pt-8 pb-4 px-4">
+                             <h3 className="text-xl font-bold text-slate-800 mb-6 font-logo uppercase tracking-tight">Qualidade e Detalhes Técnicos</h3>
+                             <ul className="list-disc pl-5 space-y-3 text-sm text-slate-600">
+                                 <li>Camisa importada padrão 1:1 Tailandesa Premium (A melhor do mercado).</li>
+                                 <li>Escudos, logos e patrocínios em bordado ou silk de alta definição emborrachado.</li>
+                                 <li>Tecido DryFit Ultra com tecnologia de respirabilidade térmica avançada.</li>
+                                 <li>Acabamento reforçado nas costuras e golas com padrão de jogo.</li>
+                                 <li>Acompanha tags originais da marca e embalagem plástica padronizada.</li>
+                                 <li className="font-bold text-[var(--color-kora-blue)]">Garantia Kora B2B: Envio invisível e seguro para seu cliente.</li>
+                             </ul>
+                         </div>
+
+                         {/* Foto da Tabela Desktop */}
+                         {selectedProduct.sizeChartUrl && (
+                            <div className="hidden md:block mt-4 px-4 pb-8">
+                               <h3 className="text-xl font-bold text-slate-800 mb-6 font-logo uppercase tracking-tight">Guia de Medidas (Referência)</h3>
+                               <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full max-w-xl rounded-lg border border-slate-200 shadow-sm" />
+                            </div>
+                         )}
+                     </div>
+
+                     {/* Coluna Direita: Buybox Info */}
+                     <div className="w-full md:w-[35%] flex flex-col order-2 md:order-2">
+                         <div className="border border-slate-200 rounded-[8px] p-6 lg:sticky lg:top-24">
+                             <div className="flex items-center gap-2 mb-4 bg-purple-50 text-purple-700 font-bold text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg w-fit">
+                                 <Tag size={12}/> SKU: {selectedProduct.id.slice(0, 5).toUpperCase()}
                              </div>
+                             <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4 leading-tight">{selectedProduct.name}</h1>
+
+                             <div className="mb-6 pt-6 border-t border-slate-200">
+                                <p className="text-sm text-slate-500 mb-4">Escolha o tamanho para conferir a disponibilidade real em estoque:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {['P', 'M', 'G', 'GG', 'XG', 'XGG', 'XGGG'].map(size => {
+                                        const stock = selectedProduct.stock?.[size] || 0;
+                                        const isSelected = selectedSize === size;
+                                        return (
+                                          <button 
+                                            key={size}
+                                            onClick={() => setSelectedSize(size)}
+                                            className={`relative px-4 py-2 rounded-md border text-sm font-bold transition-all min-w-[2.5rem] ${
+                                                isSelected 
+                                                ? 'border-purple-600 bg-purple-50 text-purple-600' 
+                                                : 'border-slate-300 text-slate-800 hover:border-slate-400 bg-white'
+                                            }`}
+                                          >
+                                            {size}
+                                          </button>
+                                        )
+                                    })}
+                                </div>
+                                {selectedSize && (
+                                    <div className="mt-4 p-3 rounded-lg border flex items-center gap-2">
+                                        {selectedProduct.stock?.[selectedSize] > 0 ? (
+                                           <><Zap className="text-emerald-500 fill-emerald-500" size={16}/> <span className="text-xs font-bold text-emerald-600 uppercase">PRONTA ENTREGA (ENVIO EM 24H)</span></>
+                                        ) : (
+                                           <><RotateCcw className="text-amber-500" size={16}/> <span className="text-xs font-bold text-amber-600 uppercase">ENCOMENDA (25 A 30 DIAS)</span></>
+                                        )}
+                                    </div>
+                                )}
+                             </div>
+
+                             <div className="mt-4 flex flex-col gap-2">
+                                  <a 
+                                     href="#faturar"
+                                     className="w-full py-4 rounded-xl text-lg font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-lg flex items-center justify-center gap-2 transition-all"
+                                  >
+                                     Faturar agora <ArrowRight size={20}/>
+                                  </a>
+                                  
+                                  <div className="mt-4 text-xs font-bold text-slate-500 flex items-center justify-center gap-1">
+                                     <ShieldCheck size={14} className="text-emerald-500"/> Garantia de Entrega Kora B2B
+                                  </div>
+                              </div>
                          </div>
-                         
-                         <a href="#faturar" className="mt-8 bg-slate-900 text-white font-bold p-5 rounded-2xl flex justify-between items-center transition shadow-xl hover:shadow-2xl hover:bg-slate-800">
-                             Faturar este Produto <ShoppingBag size={20}/>
-                         </a>
+
+                         {/* Mobile Details */}
+                         <div className="md:hidden mt-10 border-t border-slate-200 pt-8 pb-4">
+                             <h3 className="text-xl font-bold text-slate-800 mb-6">Informações Técnicas</h3>
+                             <ul className="list-disc pl-5 space-y-3 text-sm text-slate-600">
+                                 <li>Qualidade Thai Premium 1:1</li>
+                                 <li>Tecnologia DryFit Ultra</li>
+                                 <li>Escudos e Patrocínios Oficiais</li>
+                                 <li>Garantia contra defeito de fábrica</li>
+                             </ul>
+                         </div>
+
+                         {selectedProduct.sizeChartUrl && (
+                            <div className="md:hidden mt-6 pb-4 border-t border-slate-100 pt-6">
+                               <h3 className="text-xl font-bold text-slate-800 mb-6">Guia de Tamanhos</h3>
+                               <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full rounded-lg border border-slate-200 shadow-sm" />
+                            </div>
+                         )}
                      </div>
                  </div>
 
-                 {/* Divider */}
-                 <div className="w-full border-t border-slate-200 mt-16 pt-16" id="faturar">
-                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-black text-slate-900">Finalizar Fatura</h2>
-                        <p className="text-slate-500 mt-2">Dite os valores e gere o link para seu cliente.</p>
+                 {/* Recomendados */}
+                 {similarProducts.length > 0 && (
+                     <div className="mt-16 border-t border-slate-200 pt-12">
+                         <h3 className="text-2xl font-bold text-slate-800 mb-8 border-l-4 border-purple-600 pl-4 font-logo uppercase">Quem viu esta camisa também comprou</h3>
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                            {similarProducts.map((p) => (
+                              <div key={p.id} onClick={() => { setSelectedProduct(null); setTimeout(() => setSelectedProduct(p), 50); window.scrollTo(0, 0); }} className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
+                                  <div className="relative w-full pt-[100%] bg-slate-100">
+                                     {p.imageUrl ? (
+                                        <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                     ) : (
+                                        <div className="absolute inset-0 flex items-center justify-center font-logo text-slate-300 text-2xl">KORA</div>
+                                     )}
+                                  </div>
+                                  <div className="p-4 border-t border-slate-50">
+                                     <h4 className="font-bold text-slate-700 text-sm mb-2 leading-tight group-hover:text-purple-600 transition-colors uppercase">{p.name}</h4>
+                                     <div className="flex items-center gap-1.5 bg-slate-50 text-[10px] text-slate-400 font-bold uppercase tracking-widest px-2 py-1 rounded w-fit mt-2">
+                                        <Tag size={10}/> {p.category}
+                                     </div>
+                                  </div>
+                              </div>
+                            ))}
+                         </div>
                      </div>
+                 )}
 
-                     <form id="affiliate-checkout-form" onSubmit={handleCreateSale} className="bg-slate-50 p-6 md:p-12 rounded-3xl border border-slate-200 space-y-12 shadow-sm">
-                        
-                        {/* Passo 1: Tamanho */}
-                        <section>
-                           <h3 className="text-sm font-bold text-slate-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                               <span className="bg-slate-900 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs">1</span> 
-                               Tamanhos Disponíveis
-                           </h3>
-                           <div className="flex flex-wrap gap-4">
-                              {['P', 'M', 'G', 'GG', 'XG', 'XGG', 'XGGG'].map(size => {
-                                  const amnt = selectedProduct.stock?.[size] || 0;
-                                  const isAvail = amnt > 0;
-                                  return (
-                                    <button 
-                                      key={size} type="button" onClick={() => setSelectedSize(size)}
-                                      className={`flex flex-col items-center justify-center h-20 w-full sm:w-24 rounded-2xl border-2 transition-all ${selectedSize === size ? 'border-purple-600 bg-purple-50 text-purple-700 shadow-md transform -translate-y-1' : 'border-slate-200 hover:border-slate-300 text-slate-800 bg-white'}`}
-                                    >
-                                       <span className="font-black text-xl">{size}</span>
-                                       <span className={`text-[10px] uppercase font-bold tracking-widest ${isAvail ? 'text-emerald-500' : 'text-amber-500'}`}>
-                                          {isAvail ? `Pronta` : 'Prazo'}
-                                       </span>
-                                    </button>
-                                  )
-                              })}
-                           </div>
-                           {!selectedSize && <p className="text-xs text-red-500 font-bold mt-3">* Selecionar obrigatoriamente um tamanho.</p>}
-                        </section>
+                 {/* SEÇÃO DE FATURAMENTO (AQUÉM DE TUDO) */}
+                 <div className="mt-20 pt-20 border-t border-dashed border-slate-300" id="faturar">
+                    <div className="text-center mb-12">
+                        <span className="inline-block py-1.5 px-4 rounded-full bg-slate-900 text-white font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
+                           Fluxo de Venda Final
+                        </span>
+                        <h2 className="text-4xl font-black text-slate-900 tracking-tight">Faturar Pedido</h2>
+                        <p className="text-slate-500 mt-3 max-w-md mx-auto">Insira seu PIN para liberar a precificação do cliente e gerar o link de pagamento.</p>
+                    </div>
 
-                        {/* Passo 2: Precificação Obrigatória */}
-                        <section>
-                           <h3 className="text-sm font-bold text-slate-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                               <span className="bg-slate-900 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs">2</span> 
-                               Preço Final do Cliente
-                           </h3>
-                           
-                           <div className={`p-6 rounded-2xl border-2 transition-colors relative overflow-hidden bg-white shadow-sm ${isPriceInvalid ? 'border-red-400 focus-within:border-red-500' : 'border-indigo-100 focus-within:border-indigo-400'}`}>
-                               <div className="flex items-center">
-                                  <span className={`text-2xl font-bold mr-2 ${isPriceInvalid ? 'text-red-400' : 'text-indigo-400'}`}>R$</span>
-                                  <input 
-                                    type="number" step="0.01" value={sellingPrice} onChange={e => setSellingPrice(e.target.value)}
-                                    className={`w-full text-5xl font-black bg-transparent outline-none py-2 ${isPriceInvalid ? 'text-red-600' : 'text-indigo-900'}`}
-                                  />
+                    {!isBillingUnlocked ? (
+                         <div className="max-w-md mx-auto bg-white p-10 rounded-[2rem] shadow-xl border border-slate-100 text-center animate-in fade-in zoom-in duration-500">
+                             <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-8 text-slate-800 shadow-inner">
+                                 <Lock size={32} />
+                             </div>
+                             
+                             <form onSubmit={handleUnlockBilling} className="space-y-6">
+                                 <div className="space-y-2">
+                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sua Senha de Acesso</label>
+                                     <input 
+                                         required type="password" placeholder="••••" value={billingPin} onChange={e=>setBillingPin(e.target.value)}
+                                         className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-black text-center text-3xl tracking-[0.5em] focus:border-purple-500 focus:bg-white outline-none transition-all" 
+                                     />
+                                 </div>
+                                 <button type="submit" className="w-full bg-slate-900 text-white font-bold p-5 rounded-2xl flex justify-center items-center gap-3 hover:bg-slate-800 transition active:scale-95 shadow-xl">
+                                     Desbloquear Faturamento <ArrowRight size={20}/>
+                                 </button>
+                             </form>
+                         </div>
+                      ) : (
+                         <form id="affiliate-checkout-form" onSubmit={handleCreateSale} className="max-w-4xl mx-auto bg-white p-6 md:p-12 rounded-[2.5rem] border border-slate-200 space-y-12 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
+                            
+                            <div className="flex items-center gap-4 bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                                <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg active:animate-bounce">
+                                    <ShieldCheck size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Autenticação Concluída</p>
+                                    <p className="text-sm font-bold text-slate-800">Liberado por {affiliate.name.split(' ')[0]}</p>
+                                </div>
+                            </div>
+
+                            {/* Passo 1: Tamanho Confirmado */}
+                            <section>
+                               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-3">
+                                   <span className="bg-purple-600 text-white w-7 h-7 flex items-center justify-center rounded-xl text-xs shadow-md">1</span> 
+                                   Tamanho Desejado
+                               </h3>
+                               <div className="flex flex-wrap gap-3">
+                                  {['P', 'M', 'G', 'GG', 'XG', 'XGG', 'XGGG'].map(size => {
+                                      const amnt = selectedProduct.stock?.[size] || 0;
+                                      const isAvail = amnt > 0;
+                                      return (
+                                        <button 
+                                          key={size} type="button" onClick={() => setSelectedSize(size)}
+                                          className={`flex flex-col items-center justify-center h-20 w-24 rounded-2xl border-2 transition-all ${selectedSize === size ? 'border-purple-600 bg-purple-50 text-purple-700 shadow-md transform -translate-y-1' : 'border-slate-100 hover:border-slate-200 text-slate-400 bg-white'}`}
+                                        >
+                                           <span className="font-black text-xl">{size}</span>
+                                           <span className={`text-[9px] uppercase font-bold tracking-widest ${isAvail ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                              {isAvail ? `Pronta` : 'Prazo'}
+                                           </span>
+                                        </button>
+                                      )
+                                  })}
                                </div>
-                               {isPriceInvalid && (
-                                   <div className="mt-3 bg-red-50 p-3 rounded-lg border border-red-200">
-                                      <p className="text-red-600 font-bold text-sm">BLOQUEADO: O valor mínimo estabelecido pela Kora é de R$ 150,00.</p>
+                               {!selectedSize && <p className="text-[10px] text-red-500 font-bold mt-4 animate-pulse uppercase tracking-widest">* Selecione acima para continuar.</p>}
+                            </section>
+
+                            {/* Passo 2: Precificação */}
+                            <section>
+                               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-3">
+                                   <span className="bg-purple-600 text-white w-7 h-7 flex items-center justify-center rounded-xl text-xs shadow-md">2</span> 
+                                   Preço Final da Venda
+                               </h3>
+                               
+                               <div className={`p-8 rounded-3xl border-2 transition-all bg-slate-50/50 ${isPriceInvalid ? 'border-red-400 bg-red-50/10' : 'border-indigo-100 focus-within:border-purple-500 focus-within:bg-white'}`}>
+                                   <div className="flex items-center">
+                                      <span className={`text-3xl font-black mr-3 ${isPriceInvalid ? 'text-red-400' : 'text-purple-400'}`}>R$</span>
+                                      <input 
+                                        type="number" step="0.01" value={sellingPrice} onChange={e => setSellingPrice(e.target.value)}
+                                        className={`w-full text-6xl font-black bg-transparent outline-none py-2 ${isPriceInvalid ? 'text-red-600' : 'text-slate-900'}`}
+                                      />
                                    </div>
-                               )}
-                           </div>
-                        </section>
+                                   {isPriceInvalid && (
+                                       <div className="mt-4 bg-red-50 p-4 rounded-2xl border border-red-200 flex items-center gap-3">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"/>
+                                          <p className="text-red-600 font-bold text-xs uppercase tracking-tight">O valor mínimo aceito pelo sistema Kora é R$ 150,00.</p>
+                                       </div>
+                                   )}
+                               </div>
+                            </section>
 
-                        {/* Passo 3: Dados Cliente */}
-                        <section>
-                           <h3 className="text-sm font-bold text-slate-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                               <span className="bg-slate-900 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs">3</span> 
-                               Etiqueta de Envio
-                           </h3>
-                           <div className="space-y-4">
-                              <input required type="text" placeholder="Nome Completo do Cliente" value={customerName} onChange={e=>setCustomerName(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-xl font-medium focus:border-purple-500 outline-none shadow-sm" />
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <input required type="text" placeholder="CPF da Fatura" value={customerCpf} onChange={e=>setCustomerCpf(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-xl font-medium focus:border-purple-500 outline-none shadow-sm" />
-                                  <input required type="text" placeholder="WhatsApp do Cliente" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-xl font-medium focus:border-purple-500 outline-none shadow-sm" />
-                              </div>
-                              <div className="border-t border-slate-200 pt-4 pb-2 mt-4"><p className="text-xs font-bold text-slate-400 uppercase">Endereço Logístico</p></div>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  <input required type="text" placeholder="CEP" value={customerCep} onChange={e=>setCustomerCep(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-xl font-medium focus:border-purple-500 outline-none shadow-sm" />
-                                  <input required type="text" placeholder="Rua / Avenida" value={customerAddress} onChange={e=>setCustomerAddress(e.target.value)} className="md:col-span-2 w-full p-4 bg-white border border-slate-200 rounded-xl font-medium focus:border-purple-500 outline-none shadow-sm" />
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  <input required type="text" placeholder="Nº da Casa" value={customerNumber} onChange={e=>setCustomerNumber(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-xl font-medium focus:border-purple-500 outline-none shadow-sm" />
-                                  <input required type="text" placeholder="Cidade / Bairro" value={customerNeighborhood} onChange={e=>setCustomerNeighborhood(e.target.value)} className="md:col-span-2 w-full p-4 bg-white border border-slate-200 rounded-xl font-medium focus:border-purple-500 outline-none shadow-sm" />
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <input type="text" placeholder="Complemento (Ap 22)" value={customerComplement} onChange={e=>setCustomerComplement(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-xl font-medium focus:border-purple-500 outline-none shadow-sm" />
-                                  <input required type="text" placeholder="Estado (ex: SP)" value={customerState} onChange={e=>setCustomerState(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-xl font-medium focus:border-purple-500 outline-none shadow-sm" />
-                              </div>
-                           </div>
-                        </section>
+                            {/* Passo 3: Dados Cliente */}
+                            <section>
+                               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-3">
+                                   <span className="bg-purple-600 text-white w-7 h-7 flex items-center justify-center rounded-xl text-xs shadow-md">3</span> 
+                                   Dados do Cliente Final
+                               </h3>
+                               <div className="grid grid-cols-1 gap-5">
+                                  <input required type="text" placeholder="Nome Completo" value={customerName} onChange={e=>setCustomerName(e.target.value)} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl font-bold focus:border-purple-500 focus:bg-white outline-none transition-all shadow-sm" />
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                      <input required type="text" placeholder="CPF (Apenas números)" value={customerCpf} onChange={handleCpfChange} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl font-bold focus:border-purple-500 focus:bg-white outline-none transition-all shadow-sm" />
+                                      <input required type="text" placeholder="WhatsApp" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl font-bold focus:border-purple-500 focus:bg-white outline-none transition-all shadow-sm" />
+                                  </div>
+                                  
+                                  <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 mt-4">
+                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6 text-center">Destinatário & Logística</p>
+                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                                         <input required type="text" placeholder="CEP" value={customerCep} onChange={e=>setCustomerCep(e.target.value)} className="w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                         <input required type="text" placeholder="Rua / Avenida" value={customerAddress} onChange={e=>setCustomerAddress(e.target.value)} className="md:col-span-2 w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                     </div>
+                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                                         <input required type="text" placeholder="Nº" value={customerNumber} onChange={e=>setCustomerNumber(e.target.value)} className="w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                         <input required type="text" placeholder="Cidade / Bairro" value={customerNeighborhood} onChange={e=>setCustomerNeighborhood(e.target.value)} className="md:col-span-2 w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                     </div>
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                         <input type="text" placeholder="Complemento" value={customerComplement} onChange={e=>setCustomerComplement(e.target.value)} className="w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                         <input required type="text" placeholder="Estado (Ex: SP)" value={customerState} onChange={e=>setCustomerState(e.target.value)} className="w-full p-5 bg-white border border-slate-100 rounded-2xl font-bold focus:border-purple-500 outline-none shadow-sm" />
+                                     </div>
+                                  </div>
+                               </div>
+                            </section>
 
-                        {/* Submit */}
-                        <div className="pt-8">
-                            <button 
-                               type="submit" disabled={isSubmitting || !selectedSize || isPriceInvalid}
-                               className={`w-full text-white font-bold p-6 rounded-2xl flex justify-between items-center text-lg transition shadow-xl 
-                                ${isPriceInvalid || !selectedSize || isSubmitting ? 'bg-slate-300 shadow-none cursor-not-allowed text-slate-500' : 'bg-purple-600 hover:bg-purple-700 hover:shadow-2xl hover:shadow-purple-300'}`}
-                             >
-                               {isSubmitting ? 'Travejando Fatura Local...' : 'Gerar Pedido e Mostrar Fatura do Cliente'} 
-                               <ArrowRight size={24}/>
-                            </button>
-                        </div>
+                            {/* Submit */}
+                            <div className="pt-8">
+                                <button 
+                                   type="submit" disabled={isSubmitting || !selectedSize || isPriceInvalid}
+                                   className={`w-full text-white font-bold p-8 rounded-3xl flex justify-between items-center text-xl transition-all shadow-2xl ${isPriceInvalid || !selectedSize || isSubmitting ? 'bg-slate-300 shadow-none cursor-not-allowed opacity-50' : 'bg-slate-900 hover:bg-black hover:-translate-y-1 active:scale-95'}`}
+                                 >
+                                   {isSubmitting ? 'Gerando Fatura...' : 'Gerar Pedido e Link de Pagamento'} 
+                                   <ShoppingCart size={28}/>
+                                </button>
+                                <p className="text-center text-[10px] text-slate-400 font-bold mt-6 uppercase tracking-widest">O link será gerado após clicar no botão acima.</p>
+                            </div>
 
-                     </form>
+                         </form>
+                      )}
+                    </div>
                  </div>
-             </div>
-          </div>
+            </div>
       );
   }
 
@@ -295,9 +509,9 @@ export default function AppRevendedor() {
               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">PORTAL DE PARCEIRO B2B</p>
               <h1 className="text-xl font-bold mt-1 text-slate-100">{affiliate.name}</h1>
             </div>
-            <div className="bg-slate-800 p-3 rounded-full border border-slate-700">
+            <button onClick={() => setShowLogin(true)} className="bg-slate-800 p-3 rounded-full border border-slate-700 hover:bg-slate-700 transition active:scale-95 cursor-pointer">
                <TrendingUp className="text-purple-400" />
-            </div>
+            </button>
          </div>
       </header>
 
@@ -305,26 +519,48 @@ export default function AppRevendedor() {
       <main className="max-w-6xl mx-auto p-4 md:p-8 mt-4">
          <h2 className="text-3xl font-bold text-slate-800 mb-6 font-logo">ACERVO KORA IMPORTADOS</h2>
          
-         {/* Categories Navigation */}
-         <div className="flex overflow-x-auto hide-scrollbar gap-3 mb-8 pb-2">
-            {["Todas", ...new Set(products.map(p => p.category || "Outras Ligas"))].map(cat => (
-               <button 
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm transition-all border ${
-                     activeCategory === cat 
-                        ? 'bg-purple-600 text-white border-purple-600 shadow-md transform scale-105' 
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-               >
-                  {cat}
-               </button>
-            ))}
-         </div>
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+             {/* Categories Navigation */}
+             <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-2 flex-1">
+                {["Todas", ...new Set(products.map(p => p.category || "Outras Ligas"))].map(cat => (
+                   <button 
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm transition-all border ${
+                         activeCategory === cat 
+                            ? 'bg-purple-600 text-white border-purple-600 shadow-md transform scale-105' 
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      }`}
+                   >
+                      {cat}
+                   </button>
+                ))}
+             </div>
+
+             {/* Stock Filter Toggle */}
+             <button 
+                onClick={() => setShowOnlyAvailable(!showOnlyAvailable)}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-bold text-sm transition-all border-2 shadow-sm active:scale-95 ${
+                    showOnlyAvailable 
+                    ? 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-100' 
+                    : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'
+                }`}
+             >
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${showOnlyAvailable ? 'border-white bg-white' : 'border-slate-200 bg-transparent'}`}>
+                    {showOnlyAvailable && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+                </div>
+                {showOnlyAvailable ? 'Apenas Pronta Entrega' : 'Mostrar Tudo (Acervo)'}
+             </button>
+          </div>
 
          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
             {products
-               .filter(p => activeCategory === "Todas" || (p.category || "Outras Ligas") === activeCategory)
+               .filter(p => {
+                    const totalStock = Object.values(p.stock || {}).reduce((s, a) => s + a, 0);
+                    const stockMatch = showOnlyAvailable ? totalStock > 0 : true;
+                    const categoryMatch = activeCategory === "Todas" || (p.category || "Outras Ligas") === activeCategory;
+                    return stockMatch && categoryMatch;
+                })
                .map(product => {
                 const totalStock = Object.values(product.stock || {}).reduce((s, a) => s + a, 0);
                 const hasStock = totalStock > 0;
@@ -353,6 +589,121 @@ export default function AppRevendedor() {
          </div>
       </main>
 
+       {/* Login Modal */}
+       {showLogin && (
+         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl relative">
+               <button onClick={() => setShowLogin(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 p-2"><X size={20}/></button>
+               <div className="mb-6 text-center">
+                  <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4"><Lock size={32}/></div>
+                  <h3 className="text-xl font-bold text-slate-800">Acesso Restrito</h3>
+                  <p className="text-sm text-slate-500 mt-1">Insira suas credenciais gerenciais B2B.</p>
+               </div>
+               
+               <form onSubmit={handleDashboardLogin} className="space-y-4">
+                  <div>
+                     <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">E-mail</label>
+                     <input required type="email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} className="w-full mt-1 p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition font-medium text-slate-800" placeholder="Seu e-mail de acesso"/>
+                  </div>
+                  <div>
+                     <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Senha PIN</label>
+                     <input required type="password" value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} className="w-full mt-1 p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 transition font-medium text-slate-800" placeholder="Sua senha"/>
+                  </div>
+                  <button type="submit" className="w-full mt-2 p-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-md transition-transform active:scale-95 text-lg">
+                     Acessar Meu Painel
+                  </button>
+               </form>
+            </div>
+         </div>
+       )}
+
+       {/* Dashboard Modal */}
+       {isLogged && (
+         <div className="fixed inset-0 z-[100] flex justify-end">
+             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsLogged(false)} />
+             <div className="relative w-full max-w-2xl h-full bg-slate-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                 
+                 <div className="flex items-center justify-between p-6 border-b border-indigo-100 bg-white">
+                     <div>
+                         <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest"><TrendingUp size={12} className="inline mr-1"/> DASHBOARD B2B KORA</p>
+                         <h2 className="font-bold text-2xl text-slate-800 leading-tight mt-1">{affiliate.name}</h2>
+                     </div>
+                     <button onClick={() => setIsLogged(false)} className="text-slate-400 hover:text-slate-900 transition p-2 bg-slate-100 rounded-full shadow-sm font-bold flex items-center gap-2 text-xs uppercase px-4"><X size={16} /> Fechar Painel</button>
+                 </div>
+                 
+                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {loadingOrders ? (
+                       <p className="text-center text-slate-500 p-8 font-bold">Sincronizando faturamento...</p>
+                    ) : (
+                       <>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
+                                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Sua Comissão Concluída</p>
+                                 <p className="text-2xl font-black text-emerald-800 mt-1">R$ {affiliateOrders.filter(o => o.status === "Pago" || o.status === "Concluído" || o.status === "Finalizado").reduce((a, b) => a + (b.commission || 0), 0).toFixed(2).replace('.', ',')}</p>
+                                 <p className="text-[10px] text-emerald-600 font-bold mt-1 uppercase">Saldo Final</p>
+                              </div>
+                              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">A Receber</p>
+                                 <p className="text-2xl font-black text-amber-600 mt-1">R$ {affiliateOrders.filter(o => o.status === "Aguardando Pagamento do Cliente" || o.status === "Aguardando Pagamento").reduce((a, b) => a + (b.commission || 0), 0).toFixed(2).replace('.', ',')}</p>
+                                 <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">Boletos/Pix pendentes</p>
+                              </div>
+                          </div>
+
+                          {/* Lista de Carrinhos (Cobrança Zap) */}
+                          <div>
+                              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-200 pb-2"><Users size={18}/> Funil de Cobrança (Faturas Pendentes)</h3>
+                              <div className="space-y-3">
+                                  {affiliateOrders.filter(o => o.status === "Aguardando Pagamento do Cliente" || o.status === "Aguardando Pagamento").map((order) => (
+                                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 flex items-center justify-between">
+                                         <div>
+                                            <p className="font-bold text-sm text-slate-800">{order.client.name}</p>
+                                            <p className="text-xs font-mono text-slate-400 mt-0.5">Venda de R$ {order.total?.toFixed(2).replace('.', ',')}</p>
+                                         </div>
+                                          <a 
+                                            href={`https://wa.me/55${order.client.phone?.replace(/\D/g, '')}?text=Oi ${order.client.name.split(' ')[0]}, vi que você gerou um pedido na Kora através de mim, mas seu PIX está pendente!`}
+                                            target="_blank" rel="noopener noreferrer"
+                                            className="text-white bg-[#25D366] hover:bg-[#1DA851] text-xs font-bold uppercase tracking-widest py-2 px-4 rounded-lg shadow-sm transition"
+                                         >
+                                            Cobrar Cliente
+                                          </a>
+                                      </div>
+                                  ))}
+                                  {affiliateOrders.filter(o => o.status === "Aguardando Pagamento do Cliente" || o.status === "Aguardando Pagamento").length === 0 && (
+                                      <p className="text-sm text-slate-500 italic p-4 text-center bg-white rounded-xl border border-dashed border-slate-200">Nenhum cliente para ser cobrado hoje.</p>
+                                  )}
+                              </div>
+                          </div>
+
+                          {/* Histórico Geral */}
+                          <div>
+                              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-200 pb-2"><Briefcase size={18}/> Faturas Geradas (Suas Vendas)</h3>
+                              <div className="space-y-3">
+                                  {affiliateOrders.map((order) => (
+                                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-2">
+                                         <div className="flex justify-between items-start">
+                                            <p className="font-bold text-sm text-slate-800 truncate pr-4">{order.client.name}</p>
+                                            <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded w-fit capitalize ${order.status.includes('Pago') || order.status.includes('Concluído') || order.status.includes('Finalizado') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                               {order.status}
+                                            </span>
+                                         </div>
+                                         <div className="flex justify-between items-end border-t border-slate-50 pt-2">
+                                            <div>
+                                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Minha Comissão</p>
+                                               <p className={`text-sm font-black ${order.status.includes('Pago') || order.status.includes('Concluído') || order.status.includes('Finalizado') ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                   R$ {order.commission?.toFixed(2).replace('.', ',')}
+                                               </p>
+                                            </div>
+                                         </div>
+                                      </div>
+                                  ))}
+                              </div>
+                          </div>
+                       </>
+                    )}
+                 </div>
+             </div>
+         </div>
+       )}
     </div>
   );
 }

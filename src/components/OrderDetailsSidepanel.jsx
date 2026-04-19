@@ -1,5 +1,5 @@
 "use client";
-import { X, User, MapPin, Package, CreditCard, Calendar, Briefcase, CheckSquare } from "lucide-react";
+import { X, User, MapPin, Package, CreditCard, Calendar, Briefcase, CheckSquare, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -51,7 +51,7 @@ export default function OrderDetailsSidepanel({ order, isOpen, onClose }) {
 
         {/* Content Body */}
         {order && (
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-32">
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-60">
             
             {/* Affiliate Block */}
             {order.source === "Afiliado" && (
@@ -123,16 +123,39 @@ export default function OrderDetailsSidepanel({ order, isOpen, onClose }) {
               <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4">
                 <Package size={16} /> Ficha de Separação (Estoque)
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {order.items.map((item, idx) => (
-                  <div key={idx} className="flex items-start justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <div>
-                      <p className="font-bold text-slate-800">{item.name}</p>
-                      <p className="text-sm text-slate-500">Tipo: {order.type}</p>
+                  <div key={idx} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-4 transition-all hover:border-indigo-100">
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="font-bold text-slate-800 text-base leading-snug flex-1">{item.name}</p>
+                      <div className="text-right shrink-0">
+                         <span className="bg-white px-3 py-1.5 border border-slate-200 rounded-xl font-black text-[var(--color-kora-blue)] text-sm shadow-sm">
+                            {item.selectedSize}
+                         </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-[var(--color-kora-blue)]">TAM: {item.selectedSize}</p>
-                      <p className="text-xs uppercase font-bold text-slate-400 mt-1">QTD: {item.quantity}</p>
+                    
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/50">
+                       <div className="flex items-center gap-3">
+                          <div className="flex flex-col">
+                             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Qtd</span>
+                             <span className="text-sm font-bold text-slate-700">{item.quantity} un.</span>
+                          </div>
+                          <div className="w-px h-6 bg-slate-200 mx-1"></div>
+                          <div className="flex flex-col">
+                             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Tipo</span>
+                             <span className="text-sm font-bold text-slate-700">{order.type}</span>
+                          </div>
+                       </div>
+                       
+                       <a 
+                          href={`/?p=${item.id}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm text-indigo-600 hover:text-white hover:bg-black hover:border-black text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 group"
+                       >
+                          Ver no Site <ExternalLink size={14} className="group-hover:rotate-12 transition-transform" />
+                       </a>
                     </div>
                   </div>
                 ))}

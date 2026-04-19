@@ -1,7 +1,7 @@
 "use client";
 import { useCart } from "@/context/CartContext";
 import { useState } from "react";
-import { collection, addDoc, serverTimestamp, updateDoc, doc, increment } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, updateDoc, doc, increment, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Navbar from "@/components/Navbar";
 import { Receipt, CreditCard } from "lucide-react";
@@ -19,6 +19,35 @@ export default function CheckoutPage() {
   const [savedOrderIds, setSavedOrderIds] = useState([]);
   const [simulandoPagamento, setSimulandoPagamento] = useState(false);
   const [pagamentoConcluido, setPagamentoConcluido] = useState(false);
+
+  const handleCpfChange = async (e) => {
+    let typedCpf = e.target.value.replace(/\D/g, '');
+    setFormData({ ...formData, cpf: typedCpf });
+    
+    if (typedCpf.length === 11) {
+      try {
+        const clientDoc = await getDoc(doc(db, "clients", typedCpf));
+        if (clientDoc.exists()) {
+           const data = clientDoc.data();
+           setFormData(prev => ({
+              ...prev,
+              name: data.name || prev.name,
+              email: data.email || prev.email,
+              phone: data.phone || prev.phone,
+              cep: data.cep || prev.cep,
+              address: data.address || prev.address,
+              number: data.number || prev.number,
+              complement: data.complement || prev.complement,
+              neighborhood: data.neighborhood || prev.neighborhood,
+              city: data.city || prev.city,
+              state: data.state || prev.state
+           }));
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CPF", error);
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,6 +78,16 @@ export default function CheckoutPage() {
       await registerOrder(itemsImediato, 'Imediato');
       await registerOrder(itemsEncomenda, 'Encomenda');
       
+      // 3. Save/Update Client Data for CRM
+      const cleanCpf = formData.cpf.replace(/\D/g, '');
+      if (cleanCpf.length === 11) {
+          await setDoc(doc(db, "clients", cleanCpf), {
+              ...formData,
+              cpf: cleanCpf,
+              lastPurchase: serverTimestamp()
+          }, { merge: true });
+      }
+
       setSavedOrderIds(createdIds);
       setSuccess(true);
     } catch (e) {
@@ -143,10 +182,10 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 <h3 className="font-bold text-slate-800 border-b pb-2">Dados Pessoais (Criação de Conta)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input required placeholder="Nome Completo" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, name: e.target.value})} />
-                  <input required placeholder="CPF" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, cpf: e.target.value})} />
-                  <input required type="email" placeholder="E-mail" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, email: e.target.value})} />
-                  <input required placeholder="Telefone / WhatsApp" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  <input required placeholder="Nome Completo" value={formData.name} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, name: e.target.value})} />
+                  <input required placeholder="CPF" value={formData.cpf} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={handleCpfChange} />
+                  <input required type="email" placeholder="E-mail" value={formData.email} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, email: e.target.value})} />
+                  <input required placeholder="Telefone / WhatsApp" value={formData.phone} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, phone: e.target.value})} />
                 </div>
               </div>
 
@@ -154,13 +193,13 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 <h3 className="font-bold text-slate-800 border-b pb-2">Endereço de Entrega</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input required placeholder="CEP" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-1" onChange={e => setFormData({...formData, cep: e.target.value})} />
-                  <input required placeholder="Rua / Avenida" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-2" onChange={e => setFormData({...formData, address: e.target.value})} />
-                  <input required placeholder="Número" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, number: e.target.value})} />
-                  <input placeholder="Complemento" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, complement: e.target.value})} />
-                  <input required placeholder="Bairro" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, neighborhood: e.target.value})} />
-                  <input required placeholder="Cidade" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-2" onChange={e => setFormData({...formData, city: e.target.value})} />
-                  <input required placeholder="UF" className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, state: e.target.value})} />
+                  <input required placeholder="CEP" value={formData.cep} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-1" onChange={e => setFormData({...formData, cep: e.target.value})} />
+                  <input required placeholder="Rua / Avenida" value={formData.address} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-2" onChange={e => setFormData({...formData, address: e.target.value})} />
+                  <input required placeholder="Número" value={formData.number} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, number: e.target.value})} />
+                  <input placeholder="Complemento" value={formData.complement} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, complement: e.target.value})} />
+                  <input required placeholder="Bairro" value={formData.neighborhood} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, neighborhood: e.target.value})} />
+                  <input required placeholder="Cidade" value={formData.city} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none md:col-span-2" onChange={e => setFormData({...formData, city: e.target.value})} />
+                  <input required placeholder="UF" value={formData.state} className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[var(--color-kora-green)] outline-none" onChange={e => setFormData({...formData, state: e.target.value})} />
                 </div>
               </div>
 

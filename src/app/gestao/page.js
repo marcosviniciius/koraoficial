@@ -14,7 +14,7 @@ export default function AdminLogin() {
     // Usually we use Firebase Auth: signInWithEmailAndPassword, but since they want to test the flow,
     // we use a hardcoded safe pass, or bypass it visually to test Phase 2.
     if (email === "admin@kora.com" && password === "admin123") {
-      router.push("/gestao/dashboard");
+      router.push("/gestao/financeiro");
     } else {
       alert("Acesso negado. Use admin@kora.com e admin123");
     }

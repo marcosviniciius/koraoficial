@@ -5,7 +5,7 @@
   --foreground: #0f172a; /* Slate 900 for texts */
 }
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
@@ -25,4 +25,16 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
   @apply antialiased;
+}
+
+/* Custom modern scrollbar for carousels */
+.show-scrollbars-modern::-webkit-scrollbar {
+    height: 4px;
+}
+.show-scrollbars-modern::-webkit-scrollbar-track {
+    background: transparent;
+}
+.show-scrollbars-modern::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
 }
