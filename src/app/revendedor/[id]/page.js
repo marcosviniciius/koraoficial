@@ -4,6 +4,9 @@ import { collection, getDocs, doc, getDoc, addDoc, setDoc, serverTimestamp, quer
 import { db } from "@/lib/firebase";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, TrendingUp, ShieldCheck, Tag, ShoppingBag, ArrowRight, X, Users, Briefcase, Lock, Star, RotateCcw, Ruler, ShoppingCart, Zap, Copy, Check, Share2, MessageCircle } from "lucide-react";
+import { useImageModal } from "@/context/ImageModalContext";
+import ProductGallery from "@/components/ProductGallery";
+import { normalizeProductMedia } from "@/lib/productMedia";
 
 export default function AppRevendedor() {
   const { id } = useParams();
@@ -24,8 +27,9 @@ export default function AppRevendedor() {
 
 
 
-  // Full Page Workflow
-  const [selectedProduct, setSelectedProduct] = useState(null);
+   // Full Page Workflow
+   const [selectedProduct, setSelectedProduct] = useState(null);
+   const { openImage, openGallery } = useImageModal();
   
   // Billing States
   const [selectedSize, setSelectedSize] = useState("");
@@ -61,7 +65,7 @@ export default function AppRevendedor() {
         }
 
         const prodSnap = await getDocs(collection(db, "products"));
-        setProducts(prodSnap.docs.map(p => ({ id: p.id, ...p.data() })));
+        setProducts(prodSnap.docs.map((p) => normalizeProductMedia({ id: p.id, ...p.data() })));
       } catch (error) {
         console.error("Erro ao carregar app", error);
       }
@@ -304,13 +308,7 @@ export default function AppRevendedor() {
                      
                      {/* Coluna Esquerda: Imagem + Detalhes (Desktop) */}
                      <div className="w-full md:w-[65%] flex flex-col order-1 md:order-1">
-                         <div className="bg-surface-hover -800 rounded-lg flex items-center justify-center p-0 md:p-4 border border-border-dim">
-                            {selectedProduct.imageUrl ? (
-                                <img src={selectedProduct.imageUrl} className="max-w-full h-auto max-h-[500px] object-contain" alt={selectedProduct.name} />
-                            ) : (
-                                <div className="w-full h-[400px] flex items-center justify-center font-logo text-dim text-6xl">KORA</div>
-                            )}
-                         </div>
+                         <ProductGallery key={selectedProduct.id} product={selectedProduct} onOpenImage={openGallery} />
 
                          {/* Descrição Desktop */}
                          <div className="hidden md:block mt-8 border-t border-border-dim pt-8 pb-4 px-4">
@@ -329,7 +327,12 @@ export default function AppRevendedor() {
                          {selectedProduct.sizeChartUrl && (
                             <div className="hidden md:block mt-4 px-4 pb-8">
                                <h3 className="text-xl font-bold text-main mb-6 font-logo uppercase tracking-tight">Guia de Medidas (Referência)</h3>
-                               <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full max-w-xl rounded-lg border border-border-dim shadow-sm" />
+                               <img
+                                   src={selectedProduct.sizeChartUrl}
+                                   alt="Tabela de Medidas"
+                                   className="w-full max-w-xl rounded-lg border border-border-dim shadow-sm cursor-zoom-in hover:opacity-95 transition-opacity"
+                                    onClick={() => openImage(selectedProduct.sizeChartUrl, "Guia de Tamanhos")}
+                                />
                             </div>
                          )}
                      </div>
@@ -402,7 +405,12 @@ export default function AppRevendedor() {
                          {selectedProduct.sizeChartUrl && (
                             <div className="md:hidden mt-6 pb-4 border-t border-slate-100 pt-6">
                                <h3 className="text-xl font-bold text-main mb-6">Guia de Tamanhos</h3>
-                               <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full rounded-lg border border-border-dim shadow-sm" />
+                               <img
+                                   src={selectedProduct.sizeChartUrl}
+                                   alt="Tabela de Medidas"
+                                   className="w-full rounded-lg border border-border-dim shadow-sm cursor-zoom-in"
+                                    onClick={() => openImage(selectedProduct.sizeChartUrl, "Guia de Tamanhos")}
+                                />
                             </div>
                          )}
                      </div>
@@ -434,7 +442,7 @@ export default function AppRevendedor() {
                      </div>
                  )}
 
-                 {/* SEÇÃO DE FATURAMENTO (AQUÉM DE TUDO) */}
+                 {/* SEÇíO DE FATURAMENTO (AQUÉM DE TUDO) */}
                  <div className="mt-20 pt-20 border-t border-dashed border-border-dim" id="faturar">
                     <div className="text-center mb-12">
                         <span className="inline-block py-1.5 px-4 rounded-full bg-slate-900  text-white font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
@@ -584,33 +592,33 @@ export default function AppRevendedor() {
     <div className="min-h-screen bg-background pb-20 font-sans">
       
       {/* Header Afiliado */}
-      <header className="bg-slate-900  text-white p-6 sticky top-0 z-10 shadow-lg px-2">
+      <header className="bg-slate-900 text-white px-3 py-4 sticky top-0 z-10 shadow-lg md:px-6 md:py-6">
          <div className="max-w-6xl mx-auto flex justify-between items-center">
             <div>
               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">PORTAL DE PARCEIRO B2B</p>
-              <h1 className="text-xl font-bold mt-1 text-slate-100">{affiliate.name}</h1>
+              <h1 className="text-lg md:text-xl font-bold mt-1 text-slate-100">{affiliate.name}</h1>
             </div>
             <div className="flex items-center gap-2">
                {/* Re-using theme logic here if needed, but the main Navbar handles it */}
-               <button onClick={() => setShowLogin(true)} className="bg-slate-800 p-3 rounded-full border border-slate-700 hover:bg-slate-700 transition active:scale-95 cursor-pointer">
-                  <TrendingUp className="text-purple-400" />
+               <button onClick={() => setShowLogin(true)} className="bg-slate-800 p-2.5 md:p-3 rounded-full border border-slate-700 hover:bg-slate-700 transition active:scale-95 cursor-pointer">
+                  <TrendingUp className="text-purple-400" size={18} />
                </button>
             </div>
          </div>
       </header>
 
       {/* Grid Catálogo */}
-      <main className="max-w-6xl mx-auto p-4 md:p-8 mt-4">
-         <h2 className="text-3xl font-bold text-main mb-6 font-logo">ACERVO KORA IMPORTADOS</h2>
+      <main className="max-w-6xl mx-auto px-3 py-4 md:p-8 md:mt-4">
+         <h2 className="text-[2rem] leading-[0.95] md:text-3xl font-bold text-main mb-5 md:mb-6 font-logo">ACERVO KORA IMPORTADOS</h2>
          
-         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 mb-6 md:mb-8">
              {/* Categories Navigation */}
-             <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-2 flex-1">
+             <div className="flex overflow-x-auto hide-scrollbar gap-2.5 pb-2 flex-1">
                 {["Todas", ...new Set(products.map(p => p.category || "Outras Ligas"))].map(cat => (
                    <button 
                       key={cat}
                       onClick={() => setActiveCategory(cat)}
-                      className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm transition-all border ${
+                      className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-bold text-xs md:text-sm transition-all border ${
                          activeCategory === cat 
                             ? 'bg-purple-600 text-white border-purple-600 shadow-md transform scale-105' 
                             : 'bg-surface text-dim border-border-dim hover:bg-background'
@@ -624,7 +632,7 @@ export default function AppRevendedor() {
              {/* Stock Filter Toggle */}
              <button 
                 onClick={() => setShowOnlyAvailable(!showOnlyAvailable)}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-bold text-sm transition-all border-2 shadow-sm active:scale-95 ${
+                className={`w-full md:w-auto justify-center md:justify-start flex items-center gap-2 px-4 py-3 md:px-6 md:py-2.5 rounded-2xl font-bold text-xs md:text-sm transition-all border-2 shadow-sm active:scale-95 ${
                     showOnlyAvailable 
                     ? 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-100' 
                     : 'bg-surface text-slate-500 border-slate-100 hover:border-border-dim'
@@ -637,7 +645,7 @@ export default function AppRevendedor() {
              </button>
           </div>
 
-         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
             {products
                .filter(p => {
                     const totalStock = Object.values(p.stock || {}).reduce((s, a) => s + a, 0);
@@ -650,22 +658,22 @@ export default function AppRevendedor() {
                 const hasStock = totalStock > 0;
 
                 return (
-                  <div key={product.id} onClick={() => handleOpenProduct(product)} className="bg-surface -900 rounded-3xl overflow-hidden shadow-sm border border-border-dim hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col">
+                  <div key={product.id} onClick={() => handleOpenProduct(product)} className="bg-surface -900 rounded-[1.5rem] md:rounded-3xl overflow-hidden shadow-sm border border-border-dim hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col">
                      <div className="relative w-full pt-[100%] bg-surface-hover">
                         {product.imageUrl ? (
                             <img src={product.imageUrl} alt={product.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         ) : (
                             <div className="absolute inset-0 flex items-center justify-center font-logo text-slate-300 text-3xl">KORA</div>
                         )}
-                        <div className="absolute top-3 left-3">
-                            <span className={`px-3 py-1 text-[10px] md:text-xs font-bold rounded-lg uppercase tracking-wider backdrop-blur-md shadow-lg ${hasStock ? 'bg-black/80 text-white' : 'bg-surface/90 text-main'}`}>
+                        <div className="absolute top-2 left-2 md:top-3 md:left-3">
+                            <span className={`px-2.5 py-1 text-[9px] md:text-xs font-bold rounded-lg uppercase tracking-[0.18em] backdrop-blur-md shadow-lg ${hasStock ? 'bg-black/80 text-white' : 'bg-surface/90 text-main'}`}>
                                 {hasStock ? 'Pronta Entrega' : 'Longo Prazo'}
                             </span>
                         </div>
                      </div>
-                     <div className="p-4 md:p-5 flex-1 flex flex-col justify-between">
-                         <h3 className="font-bold text-main leading-tight group-hover:text-purple-600 transition-colors uppercase">{product.name}</h3>
-                         <div className="text-[10px] text-dim mt-2 flex items-center gap-1 font-bold uppercase tracking-widest"><Tag size={12}/> Thai Premium 1:1</div>
+                     <div className="p-3 md:p-5 flex-1 flex flex-col justify-between">
+                         <h3 className="font-bold text-[0.95rem] md:text-base text-main leading-[1.05] md:leading-tight group-hover:text-purple-600 transition-colors uppercase break-words">{product.name}</h3>
+                         <div className="text-[9px] md:text-[10px] text-dim mt-2 flex items-center gap-1 font-bold uppercase tracking-[0.16em]"><Tag size={11}/> Thai Premium 1:1</div>
                      </div>
                   </div>
                 )
@@ -797,6 +805,7 @@ export default function AppRevendedor() {
              </div>
          </div>
        )}
+         {/* Image modal is mounted globally via ImageModalProvider in layout.js */}
     </div>
   );
 }

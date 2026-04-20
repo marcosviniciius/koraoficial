@@ -5,9 +5,8 @@ import { useCart } from "@/context/CartContext";
 
 import { useState, useRef, useEffect } from "react";
 
-export default function Navbar({ onSearch, searchTerm }) {
+export default function Navbar({ onSearch, searchTerm, isSearchOpen, setIsSearchOpen }) {
   const { toggleCart, totalItems } = useCart();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -56,7 +55,7 @@ export default function Navbar({ onSearch, searchTerm }) {
         </div>
 
         {/* Actions / Right */}
-        <div className="flex items-center space-x-1 shrink-0 ml-2">
+        <div className="flex items-center space-x-2 md:space-x-1 shrink-0 ml-2">
           <button 
              onClick={handleSearchClick}
              className={`text-slate-500 transition-colors p-2 rounded-full hover:bg-slate-100 ${isSearchOpen && searchTerm ? 'text-[var(--color-kora-blue)]' : ''}`}

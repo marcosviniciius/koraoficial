@@ -6,6 +6,9 @@ import { ArrowRight, ShoppingCart, ChevronLeft, Ruler, ShieldCheck, Zap } from "
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useCart } from "@/context/CartContext";
+import { useImageModal } from "@/context/ImageModalContext";
+import ProductGallery from "@/components/ProductGallery";
+import { normalizeProductMedia } from "@/lib/productMedia";
 
 export default function CategoriaPage() {
   const router = useRouter();
@@ -23,12 +26,13 @@ export default function CategoriaPage() {
   // Modal states
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState("");
+  const { openImage, openGallery } = useImageModal();
 
   useEffect(() => {
     async function fetchProducts() {
       try {
         const snapshot = await getDocs(collection(db, "products"));
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const data = snapshot.docs.map((doc) => normalizeProductMedia({ id: doc.id, ...doc.data() }));
         // Filtra estritamente por categoria
         const filtered = data.filter(p => p.category && p.category.toLowerCase() === categoryName.toLowerCase());
         setProducts(filtered);
@@ -50,8 +54,9 @@ export default function CategoriaPage() {
       id: selectedProduct.id,
       name: selectedProduct.name,
       price: selectedProduct.price,
-      size: selectedSize,
       imageUrl: selectedProduct.imageUrl,
+      gallery: selectedProduct.gallery,
+      selectedSize,
       orderType
     });
 
@@ -82,13 +87,7 @@ export default function CategoriaPage() {
                <div className="flex flex-col md:flex-row gap-6 lg:gap-8 bg-white p-4 md:p-6 rounded-lg shadow-sm mb-12 border border-slate-200">
                    {/* Coluna Esquerda */}
                    <div className="w-full md:w-[65%] flex flex-col order-1 md:order-1">
-                       <div className="bg-white rounded-lg flex items-center justify-center p-0 md:p-4">
-                          {selectedProduct.imageUrl ? (
-                              <img src={selectedProduct.imageUrl} className="max-w-full h-auto max-h-[500px] object-contain" alt={selectedProduct.name} />
-                          ) : (
-                              <div className="w-full h-[400px] flex items-center justify-center font-logo text-slate-300 text-6xl">KORA</div>
-                          )}
-                       </div>
+                        <ProductGallery key={selectedProduct.id} product={selectedProduct} onOpenImage={openGallery} />
                        <div className="hidden md:block mt-8 border-t border-slate-200 pt-8 pb-4 px-4">
                            <h3 className="text-xl font-bold text-slate-800 mb-6">O que você precisa saber sobre este produto</h3>
                            <ul className="list-disc pl-5 space-y-3 text-sm text-slate-600">
@@ -102,7 +101,12 @@ export default function CategoriaPage() {
                        {selectedProduct.sizeChartUrl && (
                           <div className="hidden md:block mt-4 px-4 pb-8">
                              <h3 className="text-xl font-bold text-slate-800 mb-6">Guia de Tamanhos</h3>
-                             <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full max-w-xl rounded-lg border border-slate-200 shadow-sm" />
+                              <img
+                                src={selectedProduct.sizeChartUrl}
+                                alt="Tabela de Medidas"
+                                className="w-full max-w-xl rounded-lg border border-slate-200 shadow-sm cursor-zoom-in hover:opacity-95 transition-opacity"
+                                onClick={() => openImage(selectedProduct.sizeChartUrl, "Guia de Tamanhos")}
+                              />
                           </div>
                        )}
                    </div>
@@ -191,7 +195,12 @@ export default function CategoriaPage() {
                         {selectedProduct.sizeChartUrl && (
                            <div className="md:hidden mt-6 pb-4 border-t border-slate-100 pt-6">
                               <h3 className="text-xl font-bold text-slate-800 mb-6">Guia de Tamanhos</h3>
-                              <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full rounded-lg border border-slate-200 shadow-sm" />
+                              <img
+                                src={selectedProduct.sizeChartUrl}
+                                alt="Tabela de Medidas"
+                                className="w-full rounded-lg border border-slate-200 shadow-sm cursor-zoom-in hover:opacity-95 transition-opacity"
+                                onClick={() => openImage(selectedProduct.sizeChartUrl, "Guia de Tamanhos")}
+                              />
                            </div>
                         )}
                    </div>

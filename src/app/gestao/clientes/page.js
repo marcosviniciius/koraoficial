@@ -72,7 +72,7 @@ export default function GestaoClientes() {
   }, []);
 
   const handleDeleteClient = async (clientData) => {
-     if(!window.confirm(`ATENÇÃO FATAL: Deseja realmente excluir TODOS os dados e HISTÓRICO DE COMPRAS de ${clientData.name}?\nIsso vai apagar a ficha dele e deletar todas faturas dele do seu caixa.`)) return;
+     if(!window.confirm(`ATENÇíO FATAL: Deseja realmente excluir TODOS os dados e HISTÓRICO DE COMPRAS de ${clientData.name}?\nIsso vai apagar a ficha dele e deletar todas faturas dele do seu caixa.`)) return;
 
      setLoading(true);
      try {

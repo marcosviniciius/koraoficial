@@ -6,6 +6,57 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { SIZE_CHARTS } from "@/constants/sizeCharts";
+import { useImageModal } from "@/context/ImageModalContext";
+import ProductGallery from "@/components/ProductGallery";
+import { normalizeProductMedia } from "@/lib/productMedia";
+
+// Componente para renderizar a tabela de medidas de forma premium
+const SizeChartTable = ({ type, customUrl, onOpenImage }) => {
+  const chart = SIZE_CHARTS[type];
+
+  if (!chart && !customUrl) return null;
+
+  return (
+    <div className="mt-8 border-t border-border-dim pt-8">
+      <h3 className="text-xl font-bold text-main mb-6">Guia de Tamanhos</h3>
+
+      {chart ? (
+        <div className="overflow-x-auto rounded-xl border border-border-dim shadow-sm bg-white">
+          <table className="w-full text-left border-collapse min-w-[500px]">
+            <thead>
+              <tr className="bg-slate-50 border-b border-border-dim">
+                {chart.headers.map((header, i) => (
+                  <th key={i} className="px-4 py-3 text-sm font-bold text-slate-800">{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {chart.rows.map((row, i) => (
+                <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-blue-50/3 transition-colors">
+                  {row.map((cell, j) => (
+                    <td key={j} className="px-4 py-3 text-sm text-dim">{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="bg-slate-50 p-3 text-[11px] text-slate-500 italic">
+            *Medidas aproximadas e específicas para modelos de {chart.name} Adulto Masculino.
+          </div>
+        </div>
+      ) : (
+        <img
+          src={customUrl}
+          alt="Tabela de Medidas"
+          className="w-full max-w-xl rounded-lg border border-border-dim shadow-sm cursor-zoom-in hover:opacity-95 transition-opacity"
+          onClick={() => onOpenImage?.(customUrl, "Guia de Tamanhos")}
+        />
+      )}
+    </div>
+  );
+};
+
 
 export default function Home() {
   return (
@@ -17,20 +68,22 @@ export default function Home() {
 
 function HomeContent() {
   const router = useRouter();
-  const { addItem } = useCart();
+  const { addItem, toggleCart, totalItems } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   // Modal states
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState("");
+  const { openImage, openGallery } = useImageModal();
 
   useEffect(() => {
     async function fetchProducts() {
       try {
         const snapshot = await getDocs(collection(db, "products"));
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const data = snapshot.docs.map((doc) => normalizeProductMedia({ id: doc.id, ...doc.data() }));
         setProducts(data);
       } catch (error) {
         console.error("Error fetching products", error);
@@ -54,6 +107,12 @@ function HomeContent() {
     }
   }, [pId, products]);
 
+  useEffect(() => {
+    if (selectedProduct) {
+      window.scrollTo(0, 0);
+    }
+  }, [selectedProduct]);
+
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   // Agrupar produtos por categoria
@@ -65,7 +124,7 @@ function HomeContent() {
   }, {});
 
   const categoryOrder = ["Lançamentos", "Seleções", "Brasileirão", "Premier League", "La Liga", "Série A (Itália)", "Retrô", "Outras Ligas"];
-  
+
   const renderedCategories = Object.keys(groupedProducts).sort((a,b) => {
       const idxA = categoryOrder.indexOf(a);
       const idxB = categoryOrder.indexOf(b);
@@ -83,44 +142,82 @@ function HomeContent() {
 
     addItem({
       ...selectedProduct,
+      imageUrl: selectedProduct.imageUrl,
       selectedSize,
       orderType
     });
-    
+
     // Close Modal
     setSelectedProduct(null);
     setSelectedSize("");
   };
 
-  if (selectedProduct) {
-     const similarProducts = products.filter(p => p.category === selectedProduct.category && p.id !== selectedProduct.id).slice(0, 4);
-     const stockForSize = selectedSize ? selectedProduct.stock[selectedSize] : 0;
-     const isImmediate = stockForSize > 0;
+  const isImmediate = selectedSize ? selectedProduct?.stock[selectedSize] > 0 : false;
+  const similarProducts = selectedProduct ? products.filter(p => p.category === selectedProduct.category && p.id !== selectedProduct.id).slice(0, 4) : [];
 
-     return (
-        <div className="min-h-screen bg-background pb-20 font-sans animate-in fade-in duration-300">
-           
-           {/* Product Header */}
-           <div className="sticky top-0 z-50 bg-surface border-b border-border-dim p-4 shadow-sm flex items-center gap-4">
-               <button onClick={() => { setSelectedProduct(null); setSelectedSize(""); }} className="bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition text-main">
-                   <ChevronLeft size={20} />
-               </button>
-               <h2 className="font-bold text-main text-lg truncate flex-1">{selectedProduct.name}</h2>
-           </div>
+  return (
+    <div className="min-h-screen bg-background pb-20 font-sans">
+      {(!selectedProduct || isSearchOpen) && (
+        <Navbar
+          onSearch={setSearchTerm}
+          searchTerm={searchTerm}
+          isSearchOpen={isSearchOpen}
+          setIsSearchOpen={setIsSearchOpen}
+        />
+      )}
 
-           <div className="max-w-5xl mx-auto px-4 py-8">
-               
+      {selectedProduct ? (
+        <div className="animate-in fade-in duration-300">
+
+            {/* Product Header (Pill Format) - Ocultar se busca estiver aberta */}
+            <div className={`fixed top-2 md:top-4 left-0 right-0 z-[100] w-full px-2 md:px-4 flex justify-center pointer-events-none transition-all duration-300 ${isSearchOpen ? 'translate-y-[-120%] opacity-0' : 'translate-y-0 opacity-100'}`}>
+                <div className="pointer-events-auto bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg shadow-slate-200/50 w-full max-w-7xl rounded-full px-4 py-2 flex items-center justify-between transition-all">
+
+                    {/* Back Button */}
+                    <div className="flex items-center">
+                        <button onClick={() => { setSelectedProduct(null); setSelectedSize(""); }} className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition">
+                            <ChevronLeft size={24} />
+                        </button>
+                    </div>
+
+                    {/* Centered Logo */}
+                    <div className="flex-1 flex justify-center">
+                        <span className="font-logo text-xl md:text-2xl tracking-wider text-[var(--color-kora-blue)] leading-none pt-1">
+                            K<span className="text-[var(--color-kora-yellow)]">O</span>RA
+                        </span>
+                    </div>
+
+                    {/* Actions Group (Search & Cart) */}
+                    <div className="flex items-center space-x-2 md:space-x-1 shrink-0">
+                        <button
+                            onClick={() => setIsSearchOpen(true)}
+                            className="text-slate-500 transition-colors p-2 rounded-full hover:bg-slate-100"
+                        >
+                            <Search size={22} />
+                        </button>
+
+                        <button onClick={toggleCart} className="text-slate-600 hover:text-[var(--color-kora-green)] transition-all p-2 rounded-full hover:bg-green-50 relative group">
+                            <ShoppingCart size={22} className="group-hover:scale-110 transition-transform" />
+                            {totalItems > 0 && (
+                            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-[0.4rem] py-1 text-[10px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-[var(--color-kora-green)] rounded-full border-2 border-white shadow-sm">
+                                {totalItems}
+                            </span>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Spacer for the fixed header (apenas quando pill header está visivel) */}
+            <div className="h-[72px] md:h-[88px] w-full"></div>
+
+            <div className="max-w-5xl mx-auto px-4 py-8">
+
                <div className="flex flex-col md:flex-row gap-6 lg:gap-8 bg-surface -900 p-4 md:p-6 rounded-lg shadow-sm mb-12 border border-border-dim">
-                   
+
                    {/* Coluna Esquerda: Imagem + Detalhes (Desktop) */}
                    <div className="w-full md:w-[65%] flex flex-col order-1 md:order-1">
-                       <div className="bg-surface rounded-lg flex items-center justify-center p-0 md:p-4">
-                          {selectedProduct.imageUrl ? (
-                              <img src={selectedProduct.imageUrl} className="max-w-full h-auto max-h-[500px] object-contain" alt={selectedProduct.name} />
-                          ) : (
-                              <div className="w-full h-[400px] flex items-center justify-center font-logo text-slate-300 text-6xl">KORA</div>
-                          )}
-                       </div>
+                       <ProductGallery key={selectedProduct.id} product={selectedProduct} onOpenImage={openGallery} />
 
                        {/* Descrição Desktop */}
                        <div className="hidden md:block mt-8 border-t border-border-dim pt-8 pb-4 px-4">
@@ -134,13 +231,12 @@ function HomeContent() {
                            </ul>
                        </div>
 
-                       {/* Foto da Tabela Desktop */}
-                       {selectedProduct.sizeChartUrl && (
-                          <div className="hidden md:block mt-4 px-4 pb-8">
-                             <h3 className="text-xl font-bold text-main mb-6">Guia de Tamanhos</h3>
-                             <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full max-w-xl rounded-lg border border-border-dim shadow-sm" />
-                          </div>
-                       )}
+                       {/* Guia de Medidas Desktop */}
+                       <SizeChartTable
+                         type={selectedProduct.sizeChartType}
+                         customUrl={selectedProduct.sizeChartUrl}
+                         onOpenImage={openImage}
+                       />
                    </div>
 
                    {/* Coluna Direita: Buybox + Detalhes (Mobile) */}
@@ -163,18 +259,18 @@ function HomeContent() {
                               <div className="flex justify-between items-center mb-3">
                                   <p className="text-base font-bold text-main">Tamanho:</p>
                               </div>
-                              
+
                               <div className="flex flex-wrap gap-2">
                                   {['P', 'M', 'G', 'GG', 'XG', 'XGG', 'XGGG'].map(size => {
                                       const stock = selectedProduct.stock[size];
                                       const isSelected = selectedSize === size;
                                       return (
-                                        <button 
+                                        <button
                                           key={size}
                                           onClick={() => setSelectedSize(size)}
                                           className={`relative px-4 py-2 rounded-md border text-sm font-bold transition-all min-w-[2.5rem] ${
-                                              isSelected 
-                                              ? 'border-[#3483fa] bg-blue-50 -900/20 text-[#3483fa]' 
+                                              isSelected
+                                              ? 'border-[#3483fa] bg-blue-50 -900/20 text-[#3483fa]'
                                               : 'border-border-dim text-main hover:border-slate-400 bg-surface -800'
                                           }`}
                                         >
@@ -196,30 +292,30 @@ function HomeContent() {
 
                            {/* Botão de Compra Estilo ML */}
                            <div className="mt-4 flex flex-col gap-2">
-                                <button 
+                                <button
                                    onClick={handleAddToCart}
                                    disabled={!selectedSize}
                                    className={`w-full py-4 rounded-xl text-lg font-bold transition-all ${
-                                       selectedSize 
-                                       ? 'bg-[#3483fa] hover:bg-[#2968c8] text-white shadow-lg shadow-blue-500/30' 
+                                       selectedSize
+                                       ? 'bg-[#3483fa] hover:bg-[#2968c8] text-white shadow-lg shadow-blue-500/30'
                                        : 'bg-[#rgba(65,137,230,.15)] bg-blue-100 text-blue-300 cursor-not-allowed'
                                    }`}
                                 >
                                    Comprar agora
                                 </button>
-                                
-                                <button 
+
+                                <button
                                    onClick={handleAddToCart}
                                    disabled={!selectedSize}
                                    className={`w-full py-4 rounded-xl text-lg font-bold transition-all ${
-                                       selectedSize 
-                                       ? 'bg-blue-50 hover:bg-blue-100 text-[#3483fa]' 
+                                       selectedSize
+                                       ? 'bg-blue-50 hover:bg-blue-100 text-[#3483fa]'
                                        : 'hidden'
                                    }`}
                                 >
                                    Adicionar ao carrinho
                                 </button>
-                                
+
                                 <div className="mt-4 text-xs font-bold text-slate-500 flex items-center justify-center gap-1">
                                    <ShieldCheck size={14} className="text-[#3483fa]"/> Compra Garantida Kora Vendas
                                 </div>
@@ -238,13 +334,14 @@ function HomeContent() {
                             </ul>
                         </div>
 
-                        {/* Foto da Tabela Mobile */}
-                        {selectedProduct.sizeChartUrl && (
-                           <div className="md:hidden mt-6 pb-4 border-t border-slate-100 pt-6">
-                              <h3 className="text-xl font-bold text-main mb-6">Guia de Tamanhos</h3>
-                              <img src={selectedProduct.sizeChartUrl} alt="Tabela de Medidas" className="w-full rounded-lg border border-border-dim shadow-sm" />
-                           </div>
-                        )}
+                        {/* Guia de Medidas Mobile (O componente já lida com o espaçamento) */}
+                        <div className="md:hidden">
+                            <SizeChartTable
+                              type={selectedProduct.sizeChartType}
+                              customUrl={selectedProduct.sizeChartUrl}
+                              onOpenImage={openImage}
+                            />
+                        </div>
                    </div>
                </div>
 
@@ -273,20 +370,16 @@ function HomeContent() {
                )}
            </div>
         </div>
-     );
-  }
+      ) : (
+        <>
+          <main className="flex flex-col min-h-screen bg-background pt-20">
 
-  return (
-    <>
-      <Navbar searchTerm={searchTerm} onSearch={setSearchTerm} />
-      <main className="flex flex-col min-h-screen bg-background pt-20">
-        
 
 
         {/* Hero Section */}
         <section className="relative w-full bg-surface -900 overflow-hidden py-16 md:py-24">
           <div className="absolute top-0 right-0 w-[40%] h-full bg-[var(--color-kora-yellow)] skew-x-[-15deg] translate-x-12 opacity-10"></div>
-          
+
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             {/* Copy */}
             <div className="space-y-6">
@@ -294,13 +387,13 @@ function HomeContent() {
                 NOVA COLEÇÃO 24/25
               </span>
               <h1 className="font-logo text-5xl md:text-7xl text-[var(--color-kora-blue)] leading-[1.1]">
-                VISTA SUA <br/> 
+                VISTA SUA <br/>
                 <span className="text-[var(--color-kora-green)]">PAIXÃO</span>.
               </h1>
               <p className="text-lg text-dim max-w-lg">
-                Camisas de time originais com a melhor qualidade. O seu manto sagrado está aqui na Kora. 
+                Camisas de time originais com a melhor qualidade. O seu manto sagrado está aqui na Kora.
               </p>
-              
+
               <div className="pt-4 flex flex-col sm:flex-row gap-4">
                 <a href="#vitrine" className="bg-[var(--color-kora-blue)] hover:bg-[var(--color-kora-blue-dark)] text-white font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 text-lg transition-transform hover:-translate-y-1">
                   Ver Coleção <ArrowRight size={20} />
@@ -314,31 +407,31 @@ function HomeContent() {
         <section className="bg-[var(--color-kora-blue)] py-6 border-y-4 border-[var(--color-kora-yellow)] overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 md:px-8 overflow-hidden">
             <div className="animate-marquee flex items-center md:grid md:grid-cols-4 md:gap-6 text-white">
-               
+
                {/* Bloco de Itens 1 */}
-               <div className="flex shrink-0 items-center gap-12 pr-12 md:pr-0 md:gap-0 md:contents">
-                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max">
+               <div className="flex shrink-0 items-center gap-8 md:gap-0 pr-8 md:pr-0 md:contents">
+                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max px-2">
                      <ShieldCheck size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
                      <div>
                        <h4 className="font-bold text-sm leading-tight">Compra Segura</h4>
                        <p className="text-[10px] opacity-80">Dados criptografados</p>
                      </div>
                   </div>
-                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max">
+                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max px-2">
                      <Zap size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
                      <div>
                        <h4 className="font-bold text-sm leading-tight">Envio Expresso</h4>
                        <p className="text-[10px] opacity-80">Para pronta entrega</p>
                      </div>
                   </div>
-                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max">
+                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max px-2">
                      <RotateCcw size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
                      <div>
                        <h4 className="font-bold text-sm leading-tight">Troca Fácil</h4>
                        <p className="text-[10px] opacity-80">Até 7 dias grátis</p>
                      </div>
                   </div>
-                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max">
+                  <div className="flex items-center gap-3 justify-center md:justify-start min-w-max px-2">
                      <Star size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
                      <div>
                        <h4 className="font-bold text-sm leading-tight">Qualidade Premium</h4>
@@ -348,29 +441,29 @@ function HomeContent() {
                </div>
 
                {/* Bloco de Itens 2 (Apenas Mobile para Loop) */}
-               <div className="flex shrink-0 items-center gap-12 pr-12 md:hidden">
-                  <div className="flex items-center gap-3 justify-center min-w-max">
+               <div className="flex shrink-0 items-center gap-8 md:hidden pr-8">
+                  <div className="flex items-center gap-3 justify-center min-w-max px-2">
                      <ShieldCheck size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
                      <div>
                        <h4 className="font-bold text-sm leading-tight">Compra Segura</h4>
                        <p className="text-[10px] opacity-80">Dados criptografados</p>
                      </div>
                   </div>
-                  <div className="flex items-center gap-3 justify-center min-w-max">
+                  <div className="flex items-center gap-3 justify-center min-w-max px-2">
                      <Zap size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
                      <div>
                        <h4 className="font-bold text-sm leading-tight">Envio Expresso</h4>
                        <p className="text-[10px] opacity-80">Para pronta entrega</p>
                      </div>
                   </div>
-                  <div className="flex items-center gap-3 justify-center min-w-max">
+                  <div className="flex items-center gap-3 justify-center min-w-max px-2">
                      <RotateCcw size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
                      <div>
                        <h4 className="font-bold text-sm leading-tight">Troca Fácil</h4>
                        <p className="text-[10px] opacity-80">Até 7 dias grátis</p>
                      </div>
                   </div>
-                  <div className="flex items-center gap-3 justify-center min-w-max">
+                  <div className="flex items-center gap-3 justify-center min-w-max px-2">
                      <Star size={28} className="text-[var(--color-kora-yellow)] shrink-0" />
                      <div>
                        <h4 className="font-bold text-sm leading-tight">Qualidade Premium</h4>
@@ -402,24 +495,24 @@ function HomeContent() {
                     const categoryProducts = groupedProducts[category];
                     // Duplica os itens no mobile para simular "scroll infinito" se não estiver selecionado
                     const mobileProducts = [...categoryProducts, ...categoryProducts, ...categoryProducts];
-                    
+
                     return (
                     <div key={category} className="animate-in fade-in slide-in-from-bottom-8 duration-500">
                        <div className="mb-6 md:mb-10 text-center md:text-left px-4 md:px-0">
-                           <h3 
+                           <h3
                              onClick={() => router.push(`/categoria/${encodeURIComponent(category)}`)}
                              className="font-logo text-2xl md:text-3xl lg:text-4xl text-[var(--color-kora-blue)] border-b-4 border-[var(--color-kora-yellow)] inline-block pb-2 uppercase cursor-pointer hover:opacity-80 transition-opacity"
                            >
                                {category}
                            </h3>
                        </div>
-                       
+
                        {/* Mobile Carousel (Falso Infinito) */}
                        <div className="flex md:hidden overflow-x-auto snap-x snap-mandatory show-scrollbars-modern gap-4 pb-8 pt-2 px-4 w-full">
                            {mobileProducts.map((p, idx) => (
-                             <div key={`${p.id}-${idx}`} onClick={() => setSelectedProduct(p)} className="snap-center shrink-0 w-[260px] sm:w-[280px] group cursor-pointer bg-surface -900 rounded-2xl overflow-hidden shadow-sm border border-border-dim transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
+                             <div key={`${p.id}-${idx}`} onClick={() => setSelectedProduct(p)} className="snap-center shrink-0 w-[80vw] sm:w-[320px] group cursor-pointer bg-surface rounded-2xl overflow-hidden shadow-sm border border-border-dim transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
                                {/* Image Frame */}
-                               <div className="relative w-full pt-[100%] bg-surface-hover overflow-hidden">
+                                 <div className="relative w-full pt-[100%] bg-surface-hover overflow-hidden">
                                  {p.imageUrl ? (
                                     <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                  ) : (
@@ -444,7 +537,7 @@ function HomeContent() {
                        <div className="hidden md:grid lg:grid-cols-4 md:gap-8 md:px-0 w-full">
                          {categoryProducts.map((p) => (
                            <div key={p.id} onClick={() => setSelectedProduct(p)} className="group cursor-pointer bg-surface -900 rounded-2xl overflow-hidden shadow-sm border border-border-dim transition-all hover:shadow-xl flex flex-col hover:-translate-y-1">
-                             <div className="relative w-full pt-[100%] bg-surface-hover overflow-hidden">
+                              <div className="relative w-full pt-[100%] bg-surface-hover overflow-hidden">
                                {p.imageUrl ? (
                                   <img src={p.imageUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                ) : (
@@ -470,6 +563,10 @@ function HomeContent() {
           </div>
         </section>
       </main>
-    </>
+      </>
+      )}
+
+      {/* Image modal is mounted globally via ImageModalProvider in layout.js */}
+    </div>
   );
 }

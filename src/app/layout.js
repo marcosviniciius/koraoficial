@@ -3,6 +3,7 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import CartDrawer from "@/components/CartDrawer";
 import Analytics from "@/components/Analytics";
+import { ImageModalProvider } from "@/context/ImageModalContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,9 +29,11 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-screen flex flex-col">
         <CartProvider>
-          <Analytics />
-          {children}
-          <CartDrawer />
+          <ImageModalProvider>
+            <Analytics />
+            {children}
+            <CartDrawer />
+          </ImageModalProvider>
         </CartProvider>
       </body>
     </html>
